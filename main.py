@@ -4,6 +4,15 @@ from math import sin, cos, pi
 width = 1024
 height = 576
 c = (width/2, height/2)
+pos = [0,0,0]
+movement = {
+    'w': (0,0,1),
+    'a': (-1,0,0),
+    's': (0,0,-1),
+    'd': (1,0,0),
+    ' ': (0,1,0),
+    'q': (0,-1,0),
+    }
 
 def vector_add(v1, v2):
     if len(v1) != len(v2):
@@ -63,6 +72,11 @@ def draw_circle(x, y, r, canvas_name, color='black'):  # stolen code
     return canvas_name.create_oval(x0, y0, x1, y1, fill=color)
 
 def projection(x,y,z):  #https://en.wikipedia.org/wiki/3D_projection
+
+    x -= pos[0]
+    y -= pos[1]
+    z -= pos[2]
+    
     sx = 1/(z+5)  # shift z forwards, away from the view. Use reciprocal to scale down with increased z
     sy = 1/(z+5)
     sx *= 800  # zoom way in (original pyramid is tiny)
@@ -95,5 +109,17 @@ def myDraw(points, lines):
 
     root.after(50, lambda: myDraw(new_points, lines))
 
+def move(event):
+    global pos
+    dx = scalar_multiply(0.05, movement[event.char])
+    pos = vector_add(pos, dx)
+
+#root.after(400, myDraw)
+canvas.bind_all('<w>', move)
+canvas.bind_all('<a>', move)
+canvas.bind_all('<s>', move)
+canvas.bind_all('<d>', move)
+canvas.bind_all('<space>', move)
+canvas.bind_all('<q>', move)
 myDraw(start_points, start_lines)
 root.mainloop()
