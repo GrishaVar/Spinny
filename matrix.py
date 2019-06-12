@@ -116,12 +116,11 @@ class Vector(Matrix):  # these are saved as horizontal but treated as vertical.
             raise TypeError('Incompatible type: {}'.format(type(other)))
         if self.size != other.size:
             raise ValueError('Different Sizes')
-
-        res = Vector(map(sum, zip(self.value, other.value)))
+        return Vector(*map(sum, zip(self.value, other.value)))
 
     def __mul__(self, other):
         if not isinstance(other, Matrix):
-            return Vector([other*a for a in self.value])
+            return Vector(*[other*a for a in self.value])
         else:   # Matrix multiplication. v*m=m  m*v=v  v*v=v
             if self.m != other.n:
                 raise ValueError('Incompatible Sizes')
