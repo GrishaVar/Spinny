@@ -16,10 +16,11 @@ class Matrix():
         return self.n, self.m
 
     def __repr__(self):
-        res = ''
+        res_parts = []
         for row in self.value:
-            res += str(row) + '\n'
-        return res
+            res_parts.append('\t'.join(map(str, row)))
+        res = ')\n('.join(res_parts)
+        return '(' + res + ')'
     
     def __add__(self, other):
         if not isinstance(other, Matrix):
@@ -37,18 +38,19 @@ class Matrix():
     
     def __mul__(self, other):
         res = []
-        if isinstance(other, Vector):
-            return self * other.to_matrix()
-        elif not isinstance(other, Matrix):  # Scalar Multiplication
+        if not isinstance(other, Matrix):  # Scalar Multiplication
             for i in range(self.n):
                 row = []
                 for j in range(self.m):
                     row.append(other * self.value[i][j])
                 res.append(row)
 
-        else:  # Matrix multiplication
+        else:  # Matrix multiplication. m*m=m  v*m=m  m*v=v
             if self.m != other.n:
                 raise ValueError('Incompatible Sizes')
+
+            if isinstance(other, Vector):
+                return (self * other.to_matrix()).to_vector()
 
             for i in range(self.n):
                 row = []
@@ -88,9 +90,14 @@ class Matrix():
     @staticmethod
     def transpose(matr):
         return Matrix(*zip(*matr.value))
+    
+    def to_vector(self):
+        if self.m != 1:
+            return ValueError('Not a vector')
+        return Vector(*Matrix.transpose(self).value[0])
 
 
-class Vector(Matrix):  # these are saved as horizontal but treated as vertical. Only difference is in __mul__ where value is transposed
+class Vector(Matrix):  # these are saved as horizontal but treated as vertical.
     def __init__(self, *points):
         self.value = tuple(points)
         self.n = len(self.value)
@@ -99,7 +106,7 @@ class Vector(Matrix):  # these are saved as horizontal but treated as vertical. 
         self.m = 1
     
     def __repr__(self):
-        return str(self.value) + 'ᵗ'
+        return '(' + (', '.join(map(str, self.value))) + ')ᵗ'
 
     def __add__(self, other):
         if not isinstance(other, Vector):
@@ -110,14 +117,15 @@ class Vector(Matrix):  # these are saved as horizontal but treated as vertical. 
         res = Vector(map(sum, zip(self.value, other.value)))
 
     def __mul__(self, other):
-        if isinstance(other, Matrix):
-            return self.to_matrix() * other
-        elif not isinstance(other, Vector):
+        if not isinstance(other, Matrix):
             return Vector([other*a for a in self.value])
-        else:
-            if (1,1) == self.size == other.size:
+        else:   # Matrix multiplication. v*m=m  m*v=v  v*v=v
+            if self.m != other.n:
+                raise ValueError('Incompatible Sizes')
+            if not isinstance(other, Vector):
+                return self.to_matrix() * other
+            else:  # only possible if n=m=1 for both. I doubt this will ever be used.
                 return Vector(self.value[0] * other.value[0])
-            raise ValueError('Incompatible Sizes')
 
     def to_matrix(self):
         return Matrix(*zip(self.value))
