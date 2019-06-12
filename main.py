@@ -1,62 +1,39 @@
+#!/usr/bin/env python3
+
 from tkinter import Tk, Canvas, Frame, BOTH
 from math import sin, cos, pi
 
+from shapes import ShapeCombination, Cube, SquarePyramid
+from matrix import Matrix, Vector
+
 width = 1024
 height = 576
-c = (width/2, height/2)
-pos = [0,0,0]
+c = Vector(width/2, height/2)
+pos = Vector(0,0,0)
 movement = {
-    'w': (0,0,1),
-    'a': (-1,0,0),
-    's': (0,0,-1),
-    'd': (1,0,0),
-    ' ': (0,1,0),
-    'q': (0,-1,0),
+    'w': Vector(0,0,1),
+    'a': Vector(-1,0,0),
+    's': Vector(0,0,-1),
+    'd': Vector(1,0,0),
+    ' ': Vector(0,1,0),
+    'q': Vector(0,-1,0),
     }
 
-def vector_add(v1, v2):
-    if len(v1) != len(v2):
-        raise ValueError('not cool man')
-    return [x1+x2 for x1,x2 in zip(v1,v2)]
-
-def scalar_multiply(a, matr):
-    if isinstance(matr[0], list) or isinstance(matr[0], tuple):  # is matrix
-        return [[a*j for j in matr] for i in matr]
-    return [a*i for i in matr]  # else: is vector
- 
-def matrix_multiply(matr, vect):
-    if len(matr[0]) != len(vect):  # pretend vector is vertical
-        raise ValueError('wtf yo')
-    res = [0 for x in range(len(matr))]
-    for i in range(len(matr)):
-        thiscoord = 0
-        for j in range(len(vect)):
-            thiscoord += matr[i][j]*vect[j]
-        res[i] = thiscoord
-    #print(str(vect) + ' => ' + str(res) + '\n')
-    return res
-
-# normal square pyramid
-start_points = [(1,0,0), (0,0,-1), (-1,0,0), (0,0, 1), (0,1,0)]
-start_lines = [
-    (0,1), (1,2), (2,3), (3,0),  # base
-    (0,4), (1,4), (2,4), (3,4)]  # top
-
 angle = pi/32  # very small angle
-rotator = [  # y unchanged, x and z move along a circle
+rotator = Matrix(  # y unchanged, x and z move along a circle
     [cos(angle), 0, -sin(angle)],
     [0, 1, 0],
     [sin(angle), 0, cos(angle)],
-]
-
-grower = [  # x,z unchanged, y gets a little smaller
+)
+grower = Matrix(  # x,z unchanged, y gets a little smaller
     [1, 0, 0],
     [0, 0.95, 0],
     [0, 0, 1],
-]
+)
+# You can multiply these matrices to get both effects.
+both = rotator * grower
 
 # LA skript: matrix multiplication is associative!
-# You can multiply these matrices to get both effects.
 
 root = Tk()
 root.geometry('{}x{}'.format(width, height))
@@ -64,55 +41,55 @@ root.geometry('{}x{}'.format(width, height))
 canvas = Canvas(root)
 canvas.pack(fill=BOTH, expand=1)
 
-def draw_circle(x, y, r, canvas_name, color='black'):  # stolen code
+def draw_circle(v, r, canvas_name, color='black'):
+    x,y = v.value
+
     x0 = x - r
     y0 = y - r
     x1 = x + r
     y1 = y + r
     return canvas_name.create_oval(x0, y0, x1, y1, fill=color)
 
-def projection(x,y,z):  #https://en.wikipedia.org/wiki/3D_projection
+def projection(v):  #https://en.wikipedia.org/wiki/3D_projection
 
-    x -= pos[0]
-    y -= pos[1]
-    z -= pos[2]
+    v -= pos
+    z = v.value[2] # TODO: better way to do this?
     
     sx = 1/(z+5)  # shift z forwards, away from the view. Use reciprocal to scale down with increased z
     sy = 1/(z+5)
     sx *= 800  # zoom way in (original pyramid is tiny)
     sy *= -800  # tk has height wrong way around I think
-    res = matrix_multiply([[sx,0,0],[0,sy,0]], (x,y,z))  # different from wiki one because z is my depth
-    res = vector_add(res, c)  # move to the middle
+    res = Matrix((sx,0,0), (0,sy,0)) * v  # different from wiki one because z is my depth
+    res += c  # move to the middle
     return res
 
-def myDraw(points, lines):
+def myDraw(shape):
     canvas.delete('all')
     
     converted_points = []
     
-    for x,y,z in points:
-        converted = projection(x,y,z)
+    for v in shape.points:
+        converted = projection(v)
         converted_points.append(converted)
 
-        draw_circle(*converted, 2, canvas, 'red')
+        draw_circle(converted, 2, canvas, 'red')
 
-    for p1, p2 in lines:
-        p1_coords = converted_points[p1]
-        p2_coords = converted_points[p2]
+    for p1, p2 in shape.lines:
+        p1_vect = converted_points[p1]
+        p2_vect = converted_points[p2]
 
-        canvas.create_line(*p1_coords, *p2_coords)
+        canvas.create_line(*p1_vect.value, *p2_vect.value)
 
-    p = canvas.create_polygon(*converted_points[0], *converted_points[1], *converted_points[4])
+    p = canvas.create_polygon(*converted_points[0].value, *converted_points[1].value, *converted_points[4].value)
     canvas.itemconfigure(p, fill='#603')
 
-    new_points = [matrix_multiply(rotator, i) for i in points]  # yo linear algebra works
+    shape.transform(rotator)  # yo linear algebra works
 
-    root.after(50, lambda: myDraw(new_points, lines))
+    root.after(50, lambda: myDraw(shape))
 
 def move(event):
     global pos
-    dx = scalar_multiply(0.05, movement[event.char])
-    pos = vector_add(pos, dx)
+    pos = pos + 0.05*movement[event.char]
 
 #root.after(400, myDraw)
 canvas.bind_all('<w>', move)
@@ -121,5 +98,18 @@ canvas.bind_all('<s>', move)
 canvas.bind_all('<d>', move)
 canvas.bind_all('<space>', move)
 canvas.bind_all('<q>', move)
-myDraw(start_points, start_lines)
+
+myShape = ShapeCombination(
+    Cube(Vector(0,0,0)),
+    Cube(Vector(0,0,1)),
+    Cube(Vector(0,0,-1)),
+    Cube(Vector(0,-1,-1)),
+    Cube(Vector(0,-1,1)),
+    SquarePyramid(Vector(0,1,1)),
+    SquarePyramid(Vector(0,1,-1)),
+    shift=Vector(-.5,-1.4,-.5),
+)
+#myShape = SquarePyramid(Vector(-.5,-.5,-.5))
+
+myDraw(myShape)
 root.mainloop()
