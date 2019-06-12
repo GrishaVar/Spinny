@@ -96,6 +96,9 @@ class Matrix():
             return ValueError('Not a vector')
         return Vector(*Matrix.transpose(self).value[0])
 
+    def copy(self):
+        return Matrix(*(self.value[:]))
+
 
 class Vector(Matrix):  # these are saved as horizontal but treated as vertical.
     def __init__(self, *points):
@@ -129,4 +132,7 @@ class Vector(Matrix):  # these are saved as horizontal but treated as vertical.
 
     def to_matrix(self):
         return Matrix(*zip(self.value))
+
+    def copy(self):
+        return Vector(*self.value)
 
