@@ -1,36 +1,64 @@
-class Shape():
-	DEFAULT_POINTS = [(0,0,0)]  # first points is the 'anchor'
-	LINES = []
+from matrix import Matrix, Vector
 
-	def __init__(self, pos, outlined=False):
-		self.pos = pos
-		self.points = [for x,y,z in DEFAULT_POINTS]
-	
-	def move_to(pos):
-		dx, dy, dz = pos
-		cx, cy, cz = self.points[0][:]
-		self.points = [(dx-cx, dy-cy, dz-cz) for x,y,z in self.points]
-	
-	def move_by(pos):
-		dx, dy, dz = pos
-		self.points = [(x+nx, y+dy, z+dz) for x,y,z in self.points]
+conv = lambda v : Vector(*v)
+v0 = Vector(0,0,0)
+m1 = Matrix((1,0,0),(0,1,0),(0,0,1))
+
+class Shape():
+    DEFAULT_POINTS = [v0]  # first points is the 'anchor'
+    LINES = []
+
+    def __init__(self, shift=v0, trans=m1):
+        self.reset()
+        self.move_to(shift)
+        self.transform(trans)
+    
+    @property
+    def cur(self):
+        return self.points[0]
+    
+    def reset(self):
+        self.points = self.DEFAULT_POINTS[:]
+        self.lines = self.LINES[:]
+    
+    def move_to(self, pos):
+        self.points = [v-self.cur+pos for v in self.points]
+    
+    def move_by(self, pos):
+        self.points = [v+pos for v in self.points]
+    
+    def transform(self, m):  # apply matrix transform to all points
+        self.points = [m*v for v in self.points]
+
+
+class ShapeCombination(Shape):
+    def __init__(self, *shapes, shift=v0, trans=m1):
+        self.reset()
+        for shape in shapes:
+            offset = len(self.points)
+            self.points += shape.points
+            self.lines += [(i1+offset, i2+offset) for i1,i2 in shape.lines]
+        self.move_to(shift)
+        self.transform(trans)
 
 
 class Cube(Shape):
-	DEFAULT_POINTS = [
-		(0,0,0), (0,0,1), (1,0,1), (1,0,0),
-		(0,1,0), (0,1,1), (1,1,1), (1,1,0)]
-	LINES = [
-		(0,1), (1,2), (2,3), (3,0),
-		(4,5), (5,6), (6,7), (7,4),
-		(0,4), (1,5), (2,6), (3,7)]
+    DEFAULT_POINTS = list(map(conv, (
+        (0,0,0), (0,0,1), (1,0,1), (1,0,0),
+        (0,1,0), (0,1,1), (1,1,1), (1,1,0),
+    )))
+    LINES = [
+        (0,1), (1,2), (2,3), (3,0),
+        (4,5), (5,6), (6,7), (7,4),
+        (0,4), (1,5), (2,6), (3,7)]
 
 
 class SquarePyramid(Shape):
-	DEFAULT_POINTS = [
-		(0,0,0), (0,0,1), (1,0,1), (1,0,0),
-		(0.5, 1, 0.5)]
-	LINES = [
-		(0,1), (1,2), (2,3), (3,0),
-		(0,4), (1,4), (2,4), (3,4)]
-		
+    DEFAULT_POINTS = list(map(conv, (
+        (0,0,0), (0,0,1), (1,0,1), (1,0,0),
+        (0.5, 1, 0.5),
+    )))
+    LINES = [
+        (0,1), (1,2), (2,3), (3,0),
+        (0,4), (1,4), (2,4), (3,4)]
+        
