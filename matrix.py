@@ -10,10 +10,36 @@ class Matrix():
                 raise ValueError('Matrix of size zero')
             if len(row) != self.m:
                 raise ValueError('Marix with unequal row lengths')
+        self._det = None
     
     @property
     def size(self):
         return self.n, self.m
+    
+    @property
+    def det(self):
+        if self._det is not None:  # kinda-sorta-memoised determinant
+            return self._det
+        if self.n != self.m:
+            self._det = 0
+        elif self.n == 1:
+            self._det = self.value[0][0]
+        elif self.n == 2:
+            v = self.value
+            self._det = v[0][0]*v[1][1] - v[0][1]*v[1][0]
+        elif self.n == 3:
+            v = self.value
+            self._det = (
+                v[0][0]*v[1][1]*v[2][2] +
+                v[0][1]*v[1][2]*v[2][0] +
+                v[0][2]*v[1][0]*v[2][1] -
+                v[0][2]*v[1][1]*v[2][0] -
+                v[0][1]*v[1][0]*v[2][2] -
+                v[0][0]*v[1][2]*v[2][1]
+            )  # I regret this
+        else:
+            raise NotImplementedError('oof dude')
+        return self.det
 
     def __repr__(self):
         res_parts = []
