@@ -50,7 +50,7 @@ def draw_circle(v, r, canvas_name, color='black'):
     y1 = y + r
     return canvas_name.create_oval(x0, y0, x1, y1, fill=color)
 
-def projection(v):  #https://en.wikipedia.org/wiki/3D_projection
+def projection(v):
 
     v -= pos
     z = v.value[2] # TODO: better way to do this?
@@ -109,7 +109,6 @@ myShape = ShapeCombination(
     SquarePyramid(Vector(0,1,-1)),
     shift=Vector(-.5,-1.4,-.5),
 )
-#myShape = SquarePyramid(Vector(-.5,-.5,-.5))
 
 myDraw(myShape)
 root.mainloop()
