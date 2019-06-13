@@ -29,6 +29,30 @@ class Shape():
     
     def transform(self, m):  # apply matrix transform to all points
         self.points = [m*v for v in self.points]
+        if m.det == 0:  # optimisation only needed if det=0 ( <=> 1 or more dimentions collapsed)
+            self.optimise()
+    
+    def optimise(self):  # remove duplicate points
+        seen_vects = []
+        changes = {}
+        offset = 0
+        for i, v in enumerate(self.points):
+            for j, w in enumerate(seen_vects):  #O(n^2)?
+                if v.value == w.value:
+                    changes[i] = j
+                    offset += 1
+                    break
+            else:
+                seen_vects.append(v)
+                changes[i] = i-offset
+
+        self.points = seen_vects  # replace list with duplicates            
+        self.lines = [{changes[i], changes[j]} for i,j in self.lines]  # replace duplicate points in lines
+        new_lines = []
+        for l in self.lines:
+            if l not in new_lines:
+                new_lines.append(l)
+        self.lines = new_lines  # remove duplicate lines
 
 
 class ShapeCombination(Shape):
@@ -40,6 +64,7 @@ class ShapeCombination(Shape):
             self.lines += [(i1+offset, i2+offset) for i1,i2 in shape.lines]
         self.move_to(shift)
         self.transform(trans)
+        self.optimise()
 
 
 class Cube(Shape):
@@ -48,9 +73,9 @@ class Cube(Shape):
         (0,1,0), (0,1,1), (1,1,1), (1,1,0),
     )))
     LINES = [
-        (0,1), (1,2), (2,3), (3,0),
-        (4,5), (5,6), (6,7), (7,4),
-        (0,4), (1,5), (2,6), (3,7)]
+        {0,1}, {1,2}, {2,3}, {3,0},
+        {4,5}, {5,6}, {6,7}, {7,4},
+        {0,4}, {1,5}, {2,6}, {3,7}]
 
 
 class SquarePyramid(Shape):
@@ -59,6 +84,6 @@ class SquarePyramid(Shape):
         (0.5, 1, 0.5),
     )))
     LINES = [
-        (0,1), (1,2), (2,3), (3,0),
-        (0,4), (1,4), (2,4), (3,4)]
+        {0,1}, {1,2}, {2,3}, {3,0},
+        {0,4}, {1,4}, {2,4}, {3,4}]
         
