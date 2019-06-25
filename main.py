@@ -45,7 +45,7 @@ def projection(v, camera, centre):
     res += centre  # move to the middle
     return res
 
-class Camera():
+class Camera:
     KEY_BINDINGS = {
         'w': V(0,0,1),
         'a': V(-1,0,0),
@@ -53,11 +53,13 @@ class Camera():
         'd': V(1,0,0),
         ' ': V(0,1,0),
         'q': V(0,-1,0),
+
         'i': -1,
         'j': 1,
         'k': 1,
         'l': -1,
     }
+
     def __init__(self, v=V(0,0,-10), speed=0.05, rot_speed=pi/64):
         self.pos = v
         self.speed = speed
@@ -103,14 +105,14 @@ class Camera():
 
 
 class Window():
-    def __init__(self, root, canvas, shape):#, width, height):
+    def __init__(self, root, canvas, shape):  #, width, height):
         self.root = root
         self.canvas = canvas
         self.shape = shape
         self.width = 1200
         self.height = 700
 
-        self.root.attributes('-zoomed', True)
+        # self.root.attributes('-zoomed', True)
         self.canvas.pack(fill=BOTH, expand=1)
         
         self.centre = V(self.width/2, self.height/2)
@@ -128,6 +130,8 @@ class Window():
         self.canvas.bind_all('<l>', self.camera.turn)
         self.canvas.bind_all('<i>', self.camera.turn)
         self.canvas.bind_all('<k>', self.camera.turn)
+
+        self.canvas.bind_all('<r>', self.reset)
     
     def start(self):
         self.draw()
@@ -146,7 +150,7 @@ class Window():
         for f in self.shape.faces:
             p = self.canvas.create_polygon( *(converted_points[x].value for x in f) )
             #self.canvas.itemconfigure(p, fill='#'+''.join([choice('012356789abcdef') for x in range(6)]))
-            self.canvas.itemconfigure(p, fill='#603', stipple='gray50')
+            self.canvas.itemconfigure(p, fill='#4510f2', stipple='gray50')
             
         for p1, p2 in self.shape.lines:
             p1_vect = converted_points[p1]
@@ -156,6 +160,24 @@ class Window():
         self.shape.transform(obj_rotator)  # yo linear algebra works
 
         self.root.after(self.refresh, self.draw)
+
+    def reset(self, event):
+        self.camera = Camera()
+
+        #  sure its ugly using this code twice, but i don't care this function isn't essential anyways
+        self.canvas.bind_all('<w>', self.camera.move)
+        self.canvas.bind_all('<a>', self.camera.move)
+        self.canvas.bind_all('<s>', self.camera.move)
+        self.canvas.bind_all('<d>', self.camera.move)
+        self.canvas.bind_all('<space>', self.camera.move)
+        self.canvas.bind_all('<q>', self.camera.move)
+
+        self.canvas.bind_all('<j>', self.camera.turn)
+        self.canvas.bind_all('<l>', self.camera.turn)
+        self.canvas.bind_all('<i>', self.camera.turn)
+        self.canvas.bind_all('<k>', self.camera.turn)
+
+        self.canvas.bind_all('<r>', self.reset)
 
 
 myShape = ShapeCombination(
