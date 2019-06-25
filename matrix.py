@@ -155,6 +155,12 @@ class Vector(Matrix):  # these are saved as horizontal but treated as vertical.
             else:  # only possible if n=m=1 for both. I doubt this will ever be used.
                 return Vector(self.value[0] * other.value[0])
 
+    @property
+    def length(self):  # another semi-memoised expensive function
+        if self._length is None:
+            self._length = sum([c**2 for c in v.value])**0.5
+        return self._length
+
     def to_matrix(self):
         return Matrix(*zip(self.value))
 

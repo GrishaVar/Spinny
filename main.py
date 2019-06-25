@@ -34,13 +34,11 @@ def draw_circle(v, r, canvas_name, color='black'):
 
 def projection(v, camera, centre):
     v -= camera.pos
-    z = v.value[2] # TODO: better way to do this?
-    dist_to_point = sum([c**2 for c in v.value])**0.5
     v = y_rotator(camera.y_rotation_angle) * v  # rotate around y
     v = x_rotator(camera.x_rotation_angle) * v  # rotate around x
     
-    sx = 1/dist_to_point  # more distance => point closer to middle (?)
-    sy = 1/dist_to_point
+    sx = 1/v.length  # more distance => point closer to middle (?)
+    sy = 1/v.length
     sx *= 800  # zoom way in (original pyramid is tiny)
     sy *= -800  # tk has height wrong way around I think
     res = M((sx,0,0), (0,sy,0)) * v  # Apply transform from Q3 to Q2
