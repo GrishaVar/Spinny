@@ -133,6 +133,7 @@ class Vector(Matrix):  # these are saved as horizontal but treated as vertical.
         if self.n == 0:
             raise ValueError('Vector of size zero')
         self.m = 1
+        self._length = None
     
     def __repr__(self):
         return '(' + (', '.join(map(str, self.value))) + ')ᵗ'
@@ -158,7 +159,7 @@ class Vector(Matrix):  # these are saved as horizontal but treated as vertical.
     @property
     def length(self):  # another semi-memoised expensive function
         if self._length is None:
-            self._length = sum([c**2 for c in v.value])**0.5
+            self._length = sum([c**2 for c in self.value])**0.5
         return self._length
 
     def to_matrix(self):
