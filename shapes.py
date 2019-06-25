@@ -56,14 +56,12 @@ class Shape():
                 new_lines.append(l)
         self.lines = new_lines  # remove duplicate lines
 
-        print(len(self.faces))
         self.faces = [set(map(changes.get, f)) for f in self.faces]  # update points in faces
         new_faces = []
         for f in self.faces:
             if f not in new_faces:
                 new_faces.append(f)
         self.faces = new_faces
-        print(len(self.faces))
 
 
 class ShapeCombination(Shape):
