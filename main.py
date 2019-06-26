@@ -45,7 +45,7 @@ def projection(v, camera, centre):
     res += centre  # move to the middle
     return res
 
-class Camera():
+class Camera:
     def __init__(self, v=V(0,0,-10), d=V(0,0,1), speed=0.1, rot_speed=pi/64):
         self.pos = v
         self.dir = d
@@ -84,7 +84,7 @@ class Camera():
         self.dir = rot_matrix * self.dir
 
 
-class Window():
+class Window:
     KEY_BINDINGS = {
         'w': V(0,0,1),
         'a': V(-1,0,0),
@@ -98,7 +98,7 @@ class Window():
         'l': V(0,-1),
     }
 
-    def __init__(self, root, canvas, shape):#, width, height):
+    def __init__(self, root, canvas, shape):  #, width, height):
         self.root = root
         self.canvas = canvas
         self.shape = shape
@@ -125,15 +125,16 @@ class Window():
         self.canvas.bind_all('<q>', self.move_input)
         self.canvas.bind_all('<space>', self.move_input)
         
-        self.canvas.bind_all('<Up>', self.turn_input)
-        self.canvas.bind_all('<Down>', self.turn_input)
-        self.canvas.bind_all('<Left>', self.turn_input)
-        self.canvas.bind_all('<Right>', self.turn_input)
+        self.canvas.bind_all('<j>', self.turn_input)
+        self.canvas.bind_all('<l>', self.turn_input)
+        self.canvas.bind_all('<i>', self.turn_input)
+        self.canvas.bind_all('<k>', self.turn_input)
         self.canvas.bind('<Motion>', self.turn_input)
         
         self.canvas.bind_all('<p>', self.toggle_motion)
         self.canvas.bind_all('<Escape>', self.toggle_motion)
         self.canvas.bind_all('<Leave>', self.pause_motion)
+        self.canvas.bind_all('<Control-r>', self.reset_camera)
         self.canvas.bind_all('<Control-c>', self.quit)
     
     def start(self):
@@ -158,7 +159,7 @@ class Window():
         for f in self.shape.faces:
             p = self.canvas.create_polygon( *(converted_points[x].value for x in f) )
             #self.canvas.itemconfigure(p, fill='#'+''.join([choice('012356789abcdef') for x in range(6)]))
-            self.canvas.itemconfigure(p, fill='#603', stipple='gray50')
+            self.canvas.itemconfigure(p, fill='#660033', stipple='gray50')
             
         for p1, p2 in self.shape.lines:
             p1_vect = converted_points[p1]
@@ -202,6 +203,9 @@ class Window():
     
     def quit(self, *args):
         self.root.destroy()
+
+    def reset_camera(self, event):
+        self.camera = Camera()  # TODO add a way of resetting to non-standard camera?
 
 myShape = ShapeCombination(
     Cube(V(0,0,0)),
