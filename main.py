@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from tkinter import Tk, Canvas, Frame, BOTH
+from tkinter import Tk, Canvas, Frame, BOTH, EventType
 from math import sin, cos, pi, atan
 from random import randint, choice
 
@@ -33,9 +33,9 @@ def draw_circle(v, r, canvas_name, color='black'):
     return canvas_name.create_oval(x0, y0, x1, y1, fill=color)
 
 def projection(v, camera, centre):
-    v -= camera.pos
-    v = y_rotator(camera.y_rotation_angle) * v  # rotate around y
-    v = x_rotator(camera.x_rotation_angle) * v  # rotate around x
+    v -= camera.pos  # camera is basically the origin after this
+    v = x_rotator(camera.x_rotation_angle) * v  # rotate point on x-axis around camera
+    v = y_rotator(camera.y_rotation_angle) * v  # rotate point on y-axis around camera
     
     sx = 1/v.length  # more distance => point closer to middle (?)
     sy = 1/v.length
@@ -46,35 +46,23 @@ def projection(v, camera, centre):
     return res
 
 class Camera():
-    KEY_BINDINGS = {
-        'w': V(0,0,1),
-        'a': V(-1,0,0),
-        's': V(0,0,-1),
-        'd': V(1,0,0),
-        ' ': V(0,1,0),
-        'q': V(0,-1,0),
-        'i': -1,
-        'j': 1,
-        'k': 1,
-        'l': -1,
-    }
-    def __init__(self, v=V(0,0,-10), speed=0.05, rot_speed=pi/64):
+    def __init__(self, v=V(0,0,-10), d=V(0,0,1), speed=0.1, rot_speed=pi/64):
         self.pos = v
+        self.dir = d
         self.speed = speed
         self.rot_speed = rot_speed
-        self.direction = V(0,0,1)
     
     @property
     def x(self):
-        return self.direction.value[0]
+        return self.dir.value[0]
     
     @property
     def y(self):
-        return self.direction.value[1]
+        return self.dir.value[1]
     
     @property
     def z(self):
-        return self.direction.value[2]
+        return self.dir.value[2]
     
     @property
     def y_rotation_angle(self):
@@ -88,46 +76,65 @@ class Camera():
             return pi
         return atan(self.y/self.z)
 
-    def move(self, event):
-        self.pos += self.speed * self.KEY_BINDINGS.get(event.char, V(0,0,0))
-
-    def turn(self, event):
-        multiplier = self.KEY_BINDINGS.get(event.char, 1)
-        if event.char in ('j', 'l'):
-            rotator = y_rotator
-        elif event.char in ('i', 'k'):
-            rotator = x_rotator
-        else:
-            raise ValueError('wrong key?')
-        self.direction = rotator(multiplier*self.rot_speed) * self.direction
+    def move(self, v):
+        self.pos += v*self.speed
+    
+    def turn(self, rad_x, rad_y):
+        rot_matrix = x_rotator(rad_x) * y_rotator(rad_y)  # two M*v would be (3x) faster, but this is waay cooler
+        self.dir = rot_matrix * self.dir
 
 
 class Window():
+    KEY_BINDINGS = {
+        'w': V(0,0,1),
+        'a': V(-1,0,0),
+        's': V(0,0,-1),
+        'd': V(1,0,0),
+        ' ': V(0,1,0),
+        'q': V(0,-1,0),
+        'i': V(-1,0),
+        'j': V(0,1),
+        'k': V(1,0),
+        'l': V(0,-1),
+    }
+
     def __init__(self, root, canvas, shape):#, width, height):
         self.root = root
         self.canvas = canvas
         self.shape = shape
-        self.width = 1200
-        self.height = 700
+        self.width = 1366
+        self.height = 744
+
+        self.w2 = self.width/2
+        self.h2 = self.height/2
+        self.mouse = [0, 0]
+        self.paused = False
 
         self.root.attributes('-zoomed', True)
+        self.root.config(cursor="none")
         self.canvas.pack(fill=BOTH, expand=1)
         
-        self.centre = V(self.width/2, self.height/2)
+        self.centre = V(self.w2, self.h2)
         self.refresh = 50
         self.camera = Camera()
 
-        self.canvas.bind_all('<w>', self.camera.move)
-        self.canvas.bind_all('<a>', self.camera.move)
-        self.canvas.bind_all('<s>', self.camera.move)
-        self.canvas.bind_all('<d>', self.camera.move)
-        self.canvas.bind_all('<space>', self.camera.move)
-        self.canvas.bind_all('<q>', self.camera.move)
+        self.canvas.bind_all('<w>', self.move_input)
+        self.canvas.bind_all('<a>', self.move_input)
+        self.canvas.bind_all('<s>', self.move_input)
+        self.canvas.bind_all('<d>', self.move_input)
+        self.canvas.bind_all('<q>', self.move_input)
+        self.canvas.bind_all('<space>', self.move_input)
         
-        self.canvas.bind_all('<j>', self.camera.turn)
-        self.canvas.bind_all('<l>', self.camera.turn)
-        self.canvas.bind_all('<i>', self.camera.turn)
-        self.canvas.bind_all('<k>', self.camera.turn)
+        self.canvas.bind_all('<Up>', self.turn_input)
+        self.canvas.bind_all('<Down>', self.turn_input)
+        self.canvas.bind_all('<Left>', self.turn_input)
+        self.canvas.bind_all('<Right>', self.turn_input)
+        self.canvas.bind('<Motion>', self.turn_input)
+        
+        self.canvas.bind_all('<p>', self.toggle_motion)
+        self.canvas.bind_all('<Escape>', self.toggle_motion)
+        self.canvas.bind_all('<Leave>', self.pause_motion)
+        self.canvas.bind_all('<Control-c>', self.quit)
     
     def start(self):
         self.draw()
@@ -135,6 +142,11 @@ class Window():
 
     def draw(self):
         self.canvas.delete('all')
+
+        if not self.paused:
+            self.camera.turn(*self.mouse_to_angles())
+            root.event_generate('<Motion>', warp=True, x=self.w2, y=self.h2)  # stick mouse in the middle
+            self.mouse = [0, 0]
         
         converted_points = []
         
@@ -156,7 +168,40 @@ class Window():
         self.shape.transform(obj_rotator)  # yo linear algebra works
 
         self.root.after(self.refresh, self.draw)
-
+    
+    def turn_input(self, event):
+        if self.paused:
+            return
+        if event.type == EventType.Motion:  # handle mouse movement
+            if (event.x, event.y) != self.centre.value:
+                self.mouse[0] += event.x - self.centre.value[0]
+                self.mouse[1] += event.y - self.centre.value[1]
+        elif event.type == EventType.Key:  # handle key presses
+            v = self.KEY_BINDINGS.get(event.char, (0,0))
+            v *= pi/64  # TODO make sensitivity?
+            self.camera.turn(*v.value)
+    
+    def move_input(self, event):
+        if self.paused:
+            return
+        v = self.KEY_BINDINGS.get(event.char, V(0,0,0))
+        self.camera.move(v)
+    
+    def mouse_to_angles(self):  # x-rotation depends on y-position of mouse, and vice versa
+        mx, my = self.mouse
+        self.mouse = [0,0]
+        x = my*pi/1000  # TODO make denominator the sensitivity?
+        y = -mx*pi/1000  # TODO invert y-axis with the negative sign?
+        return x, y
+    
+    def pause_motion(self, event):
+        self.paused = True
+    
+    def toggle_motion(self, event):
+        self.paused = not self.paused
+    
+    def quit(self, *args):
+        self.root.destroy()
 
 myShape = ShapeCombination(
     Cube(V(0,0,0)),
@@ -173,6 +218,6 @@ if __name__ == '__main__':
     root = Tk()
     canvas = Canvas(root)
     
-    window = Window(root, canvas, myShape)#, 1024, 576)
+    window = Window(root, canvas, myShape)
     window.start()
 
