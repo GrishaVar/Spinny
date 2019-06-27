@@ -7,6 +7,9 @@ from random import randint, choice
 from shapes import ShapeCombination, Cube, SquarePyramid
 from matrix import Matrix as M, Vector as V
 
+
+CURSOR_VIS = {False: 'none', True: ''}
+
 def z_rotator(angle):  # right hand rule rotation!
     return M(  # y unchanged, x and z move along a circle
         [cos(angle), -sin(angle), 0],
@@ -32,7 +35,7 @@ def draw_circle(v, r, canvas, color='black'):
     y0 = y - r
     x1 = x + r
     y1 = y + r
-    return canvas.create_oval(x0, y0, x1, y1, fill=color)
+    return canvas.create_oval(x0, y0, x1, y1, fill=color, tag='clearable')
 
 def projection(v, camera, centre):
     v -= camera.pos  # camera is basically the origin after this
@@ -111,9 +114,10 @@ class Window:
         self.h2 = self.height/2
         self.mouse = [0, 0]
         self.paused = False
+        self.paused_text = canvas.create_text(self.w2, 10, anchor="n", font='Arial 50')
 
         self.root.attributes('-zoomed', True)
-        self.root.config(cursor="none")
+        self.root.config(cursor='none')
         self.canvas.pack(fill=BOTH, expand=1)
         
         self.centre = V(self.w2, self.h2)
@@ -144,12 +148,11 @@ class Window:
         self.root.mainloop()
 
     def draw(self):
-        self.canvas.delete('all')
+        self.canvas.delete('clearable')
 
-        if not self.paused:
-            self.camera.turn(*self.mouse_to_angles())
-            root.event_generate('<Motion>', warp=True, x=self.w2, y=self.h2)  # stick mouse in the middle
-            self.mouse = [0, 0]
+        self.camera.turn(*self.mouse_to_angles())
+        root.event_generate('<Motion>', warp=True, x=self.w2, y=self.h2)  # stick mouse in the middle
+        self.mouse = [0, 0]
         
         converted_points = []
         
@@ -159,18 +162,19 @@ class Window:
             #draw_circle(converted, 3-v.value[2], canvas, 'red')
 
         for f in self.shape.faces:
-            p = self.canvas.create_polygon( *(converted_points[x].value for x in f) )
+            p = self.canvas.create_polygon(*(converted_points[x].value for x in f), tag='clearable')
             # self.canvas.itemconfigure(p, fill='#'+''.join([choice('012356789abcdef') for x in range(6)]))
             self.canvas.itemconfigure(p, fill='#660033')  # stipple='gray50'
             
         for p1, p2 in self.shape.lines:
             p1_vect = converted_points[p1]
             p2_vect = converted_points[p2]
-            self.canvas.create_line(*p1_vect.value, *p2_vect.value)
+            self.canvas.create_line(*p1_vect.value, *p2_vect.value, tag='clearable')
 
         self.shape.transform(obj_rotator)  # yo linear algebra works
 
-        self.root.after(self.refresh, self.draw)
+        if not self.paused:
+            self.root.after(self.refresh, self.draw)
     
     def turn_input(self, event):
         if self.paused:
@@ -198,11 +202,17 @@ class Window:
         return x, y
     
     def pause_motion(self, event):
-        self.paused = True
+        if not self.paused:
+            self.toggle_motion()  # keep the pause code in one place
     
     def toggle_motion(self, event):
         self.paused = not self.paused
-    
+        self.root.config(cursor=CURSOR_VIS[self.paused])
+        self.canvas.itemconfig(self.paused_text, text='PAUSED')
+        if not self.paused:
+            self.draw()
+            self.canvas.itemconfig(self.paused_text, text='')
+
     def quit(self, *args):
         self.root.destroy()
 
