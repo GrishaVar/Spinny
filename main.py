@@ -7,11 +7,11 @@ from random import randint, choice
 from shapes import ShapeCombination, Cube, SquarePyramid
 from matrix import Matrix as M, Vector as V
 
-def y_rotator(angle):
+def z_rotator(angle):  # right hand rule rotation!
     return M(  # y unchanged, x and z move along a circle
-        [cos(angle), 0, -sin(angle)],
-        [0, 1, 0],
-        [sin(angle), 0, cos(angle)],
+        [cos(angle), -sin(angle), 0],
+        [sin(angle), cos(angle), 0],
+        [0, 0, 1],
     )
 def x_rotator(angle):
     return M(  # x unchanged, y and z move along a circle
@@ -19,82 +19,84 @@ def x_rotator(angle):
         [0, cos(angle), -sin(angle)],
         [0, sin(angle), cos(angle)],
     )
-obj_rotator = y_rotator(pi/32)  # very small angle
+obj_rotator = z_rotator(pi/32)  # very small angle
 
 # LA skript: matrix multiplication is associative!
 
-def draw_circle(v, r, canvas_name, color='black'):
+def draw_circle(v, r, canvas, color='black'):
     x,y = v.value
+    if r < 0:
+        r = 0
 
     x0 = x - r
     y0 = y - r
     x1 = x + r
     y1 = y + r
-    return canvas_name.create_oval(x0, y0, x1, y1, fill=color)
+    return canvas.create_oval(x0, y0, x1, y1, fill=color)
 
 def projection(v, camera, centre):
     v -= camera.pos  # camera is basically the origin after this
-    v = x_rotator(camera.x_rotation_angle) * v  # rotate point on x-axis around camera
-    v = y_rotator(camera.y_rotation_angle) * v  # rotate point on y-axis around camera
+    v = x_rotator(camera.x_rotation_angle) * v  # rotate points on x-axis around camera
+    v = z_rotator(camera.z_rotation_angle) * v  # rotate points on z-axis around camera
     
     sx = 1/v.length  # more distance => point closer to middle (?)
     sy = 1/v.length
     sx *= 800  # zoom way in (original pyramid is tiny)
-    sy *= -800  # tk has height wrong way around I think
-    res = M((sx,0,0), (0,sy,0)) * v  # Apply transform from Q3 to Q2
+    sy *= -800  # tk has y pointing down
+    res = M((sx,0,0), (0,0,sy)) * v  # Apply transform from Q3 to Q2
     res += centre  # move to the middle
     return res
 
 class Camera:
-    def __init__(self, v=V(0,0,-10), d=V(0,0,1), speed=0.1, rot_speed=pi/64):
-        self.pos = v
-        self.dir = d
+    def __init__(self, pos=V(0,-10,0), view=V(0,1,0), speed=0.1, rot_speed=pi/64):
+        self.pos = pos
+        self.view = view
         self.speed = speed
         self.rot_speed = rot_speed
     
     @property
     def x(self):
-        return self.dir.value[0]
+        return self.view.value[0]
     
     @property
     def y(self):
-        return self.dir.value[1]
+        return self.view.value[1]
     
     @property
     def z(self):
-        return self.dir.value[2]
+        return self.view.value[2]
     
     @property
-    def y_rotation_angle(self):
-        if not self.z:
+    def z_rotation_angle(self):
+        if not self.y:
             return pi  # think of better solution
-        return atan(self.x/self.z)
+        return atan(self.x/self.y)
     
     @property
     def x_rotation_angle(self):
-        if not self.z:
+        if not self.y:
             return pi
-        return atan(self.y/self.z)
+        return atan(self.z/self.y)
 
     def move(self, v):
         self.pos += v*self.speed
     
-    def turn(self, rad_x, rad_y):
-        rot_matrix = x_rotator(rad_x) * y_rotator(rad_y)  # two M*v would be (3x) faster, but this is waay cooler
-        self.dir = rot_matrix * self.dir
+    def turn(self, rad_x, rad_z):
+        rot_matrix = x_rotator(rad_x) * z_rotator(rad_z)  # two M*v would be (3x) faster, but this is waay cooler
+        self.view = rot_matrix * self.view
 
 
 class Window:
     KEY_BINDINGS = {
-        'w': V(0,0,1),
+        'w': V(0,1,0),
         'a': V(-1,0,0),
-        's': V(0,0,-1),
+        's': V(0,-1,0),
         'd': V(1,0,0),
-        ' ': V(0,1,0),
-        'q': V(0,-1,0),
-        'i': V(-1,0),
+        ' ': V(0,0,1),
+        'q': V(0,0,-1),
+        'i': V(1,0),
         'j': V(0,1),
-        'k': V(1,0),
+        'k': V(-1,0),
         'l': V(0,-1),
     }
 
@@ -154,12 +156,12 @@ class Window:
         for v in self.shape.points:
             converted = projection(v, self.camera, self.centre)
             converted_points.append(converted)
-            draw_circle(converted, 3-v.value[2], canvas, 'red')
+            #draw_circle(converted, 3-v.value[2], canvas, 'red')
 
         for f in self.shape.faces:
             p = self.canvas.create_polygon( *(converted_points[x].value for x in f) )
-            #self.canvas.itemconfigure(p, fill='#'+''.join([choice('012356789abcdef') for x in range(6)]))
-            self.canvas.itemconfigure(p, fill='#660033', stipple='gray50')
+            # self.canvas.itemconfigure(p, fill='#'+''.join([choice('012356789abcdef') for x in range(6)]))
+            self.canvas.itemconfigure(p, fill='#660033')  # stipple='gray50'
             
         for p1, p2 in self.shape.lines:
             p1_vect = converted_points[p1]
@@ -210,12 +212,12 @@ class Window:
 myShape = ShapeCombination(
     Cube(V(0,0,0)),
     Cube(V(0,0,1)),
-    Cube(V(0,0,-1)),
-    Cube(V(0,-1,-1)),
-    Cube(V(0,-1,1)),
-    SquarePyramid(V(0,1,1)),
-    SquarePyramid(V(0,1,-1)),
-    shift=V(-.5,-1.4,-.5),
+    SquarePyramid(V(0,0,2)),
+    Cube(V(2,0,0)),
+    Cube(V(2,0,1)),
+    SquarePyramid(V(2,0,2)),
+    Cube(V(1,0,1)),
+    shift=V(-1.5,-0.5,-1.5),
 )
 
 if __name__ == '__main__':
