@@ -60,7 +60,7 @@ class Shape():
         self.lines = [{changes[i], changes[j]} for i,j in self.lines]  # update points in lines
         new_lines = []
         for l in self.lines:
-            if l not in new_lines:
+            if len(l)==2 and l not in new_lines:
                 new_lines.append(l)
         self.lines = new_lines  # remove duplicate lines
 
@@ -69,7 +69,7 @@ class Shape():
         new_centres = []
         new_colours = []
         for f,c,col in zip(self.faces, self.centres, self.colours):
-            if f not in new_faces:
+            if len(f) > 2 and f not in new_faces:
                 new_faces.append(f)
                 new_centres.append(c)
                 new_colours.append(col)
