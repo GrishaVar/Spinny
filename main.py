@@ -105,7 +105,8 @@ class InfoBox:
             0, 0,
             fill=fill,
             outline=border,
-            width=2,   
+            width=2,
+            tag='infobox',
         )
     
     def add(self, item, default='', rounding=None):
@@ -115,7 +116,8 @@ class InfoBox:
             self.x+2,
             self.y+2 + 17*self.counter,
             anchor="nw",
-            font='Arial 13'
+            font='Arial 13',
+            tag='infobox',
         )
         self.items[item] = (default, obj, rounding)
         self.counter += 1
@@ -229,10 +231,14 @@ class Window:
             converted_points.append(converted)
             #draw_circle(converted, 3-v.value[2], canvas, 'red')
 
-        for f in self.shape.faces:
-            p = self.canvas.create_polygon(*(converted_points[x].value for x in f), tag='clearable')
-            # self.canvas.itemconfigure(p, fill='#'+''.join([choice('012356789abcdef') for x in range(6)]))
-            self.canvas.itemconfigure(p, fill='#660033')  # stipple='gray50'
+        faces = zip(self.shape.faces, self.shape.centres, self.shape.colours)
+        faces = sorted(faces, key=lambda x: (x[1]-self.camera.pos).length, reverse=True)  # sort faces by distance between camera and their centre
+        for f, _, col in faces:
+            self.canvas.create_polygon(
+                *(converted_points[x].value for x in f),
+                tag='clearable',
+                fill=col
+            )
             
         for p1, p2 in self.shape.lines:
             p1_vect = converted_points[p1]
