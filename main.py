@@ -41,8 +41,8 @@ def draw_circle(v, r, canvas, color='black'):
 
 def projection(v, camera, centre):
     v -= camera.pos  # camera is basically the origin after this
-    v = x_rotator(camera.x_rotation_angle) * v  # rotate points on x-axis around camera
-    v = z_rotator(camera.z_rotation_angle) * v  # rotate points on z-axis around camera
+    v = z_rotator(-camera.z_angle) * v  # rotate points on z-axis around camera
+    v = x_rotator(-camera.x_angle) * v  # in the opposite direction
     
     sx = 1/v.length  # more distance => point closer to middle (?)
     sy = 1/v.length
@@ -73,13 +73,13 @@ class Camera:
         return self.view.value[2]
     
     @property
-    def z_rotation_angle(self):
+    def z_angle(self):
         if not self.y:
             return pi  # think of better solution
-        return atan(self.x/self.y)
+        return atan(-self.x/self.y)  # negative x view is positive z rotation
     
     @property
-    def x_rotation_angle(self):
+    def x_angle(self):
         if not self.y:
             return pi
         return atan(self.z/self.y)
@@ -210,7 +210,7 @@ class Window:
     
     @property
     def fps(self):
-        return 1000/(self.duration+self.refresh)
+        return 1000/(self.duration/1000 + self.refresh)
     
     def start(self):
         self.draw()
@@ -261,30 +261,30 @@ class Window:
                 self.mouse[0] += event.x - self.centre.value[0]
                 self.mouse[1] += event.y - self.centre.value[1]
         elif event.type == EventType.Key:  # handle key presses
-            v = self.KEY_BINDINGS.get(event.char, (0,0))
+            v = self.KEY_BINDINGS.get(event.char)
             v *= pi/64  # TODO make sensitivity?
             self.camera.turn(*v.value)
     
     def move_input(self, event):
         if self.paused:
             return
-        v = self.KEY_BINDINGS.get(event.char, V(0,0,0))
+        v = self.KEY_BINDINGS.get(event.char)
         self.camera.move(v)
     
     def mouse_to_angles(self):  # x-rotation depends on y-position of mouse, and vice versa
         mx, my = self.mouse
         self.mouse = [0,0]
-        x = my*pi/1000  # TODO make denominator the sensitivity?
-        y = -mx*pi/1000  # TODO invert y-axis with the negative sign?
-        return x, y
+        x_angle = -my*pi/1000  # TODO make denominator the sensitivity?
+        z_angle = -mx*pi/1000  # negative mouse corresponds to positive angle change
+        return x_angle, z_angle
     
     def update_text(self):
         self.infobox.draw(  # fill these lines automatically?
             self.camera.pos.value[0],
             self.camera.pos.value[1],
             self.camera.pos.value[2],
-            self.camera.x_rotation_angle,
-            self.camera.z_rotation_angle,
+            self.camera.x_angle,
+            self.camera.z_angle,
             self.fps,
         )
     
