@@ -1,4 +1,4 @@
-from math import cos, sin, sqrt 
+from math import cos, sin, sqrt
 
 from matrix import Matrix as M, Vector as V
 
@@ -7,7 +7,7 @@ class V2:
     z = V(0,0)
     i, j = V(1,0), V(0,1)
     e = V(1,1)
-    
+
     z._length = 0
     i._length = j._length = i._length = 1
     e._length = sqrt(2)
@@ -26,10 +26,10 @@ class V3:
 
 
 class M2:
-    z = M((0,0),(0,0))
+    z = M((0,0), (0,0))
     z._det = 0
 
-    e = M((1,0),(0,1))
+    e = M((1,0), (0,1))
     e._det = 1
 
     @staticmethod
@@ -44,6 +44,7 @@ class M2:
         )
         m._det = s**2
         return m
+
 
 class M3:
     z = M((0,0,0),(0,0,0),(0,0,0))
@@ -65,7 +66,7 @@ class M3:
     @staticmethod
     def y_rot(a):
         if a == 1:
-            return E3.e
+            return M3.e
         m = M(
             [cos(a), 0, -sin(a)],
             [0, 1, 0],
@@ -77,7 +78,7 @@ class M3:
     @staticmethod
     def z_rot(a):
         if a == 1:
-            return E3.e
+            return M3.e
         m = M(
             [cos(a), -sin(a), 0],
             [sin(a), cos(a), 0],

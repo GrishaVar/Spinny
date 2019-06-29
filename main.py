@@ -6,16 +6,15 @@ from math import pi
 from collections import OrderedDict
 
 from shapes import ShapeCombination, Cube, SquarePyramid
-from matrix import Matrix as M, Vector as V
+from matrix import Vector as V
 from common import M3
 from camera import Camera, projection
 
 
 CURSOR_VIS = {False: 'none', True: ''}
 PAUSE_TEXT = {False: '', True: 'PAUSED'}
-obj_rotator = M3.z_rot(pi/32)  # very small angle
+obj_rotator = M3.z_rot(pi / 32)  # very small angle
 
-# LA skript: matrix multiplication is associative!
 
 def draw_circle(v, r, canvas, color='black'):
     x,y = v.value
@@ -34,10 +33,10 @@ class InfoBox:
         self.canvas = canvas
         self.x, self.y = pos
         self.width = width
-        
+
         self.items = OrderedDict()
         self.counter = 0
-        
+
         self.text_box = self.canvas.create_polygon(
             0, 0,
             fill=fill,
@@ -45,7 +44,7 @@ class InfoBox:
             width=2,
             tag='infobox',
         )
-    
+
     def add(self, item, default='', rounding=None):
         if item in self.items:
             return  # TODO: what should I do here?
@@ -95,29 +94,34 @@ class Window:
         'l': V(0,-1),
     }
 
-    def __init__(self, root, canvas, shape):  #, width, height):
+    def __init__(self, root, canvas, shape):
         self.root = root
         self.canvas = canvas
         self.shape = shape
         self.width = 1366
         self.height = 744
 
-        self.w2 = self.width/2
-        self.h2 = self.height/2
+        self.w2 = self.width / 2
+        self.h2 = self.height / 2
 
         self.duration = 1
 
         self.root.attributes('-zoomed', True)
         self.root.config(cursor='none')
         self.canvas.pack(fill=BOTH, expand=1)
-        
+
         self.centre = V(self.w2, self.h2)
         self.refresh = 30
         self.camera = Camera()
         self.mouse = [0, 0]
         self.paused = False
-        self.paused_text = self.canvas.create_text(self.w2, 10, anchor='n', font='Arial 50')
-        
+        self.paused_text = self.canvas.create_text(
+            self.w2,
+            10,
+            anchor='n',
+            font='Arial 50'
+        )
+
         self.infobox = InfoBox(self.canvas, (5,5), 100)
         self.infobox.add('x', default='X = {}', rounding=2)
         self.infobox.add('y', default='Y = {}', rounding=2)
@@ -132,23 +136,23 @@ class Window:
         self.canvas.bind_all('<d>', self.move_input)
         self.canvas.bind_all('<q>', self.move_input)
         self.canvas.bind_all('<space>', self.move_input)
-        
+
         self.canvas.bind_all('<j>', self.turn_input)
         self.canvas.bind_all('<l>', self.turn_input)
         self.canvas.bind_all('<i>', self.turn_input)
         self.canvas.bind_all('<k>', self.turn_input)
         self.canvas.bind('<Motion>', self.turn_input)
-        
+
         self.canvas.bind_all('<p>', self.toggle_motion)
         self.canvas.bind_all('<Escape>', self.toggle_motion)
         self.canvas.bind_all('<Leave>', self.pause_motion)
         self.canvas.bind_all('<Control-r>', self.reset_camera)
         self.canvas.bind_all('<Control-q>', self.quit)
-    
+
     @property
     def fps(self):
-        return 1000/(self.duration/1000 + self.refresh)
-    
+        return 1000 / (self.duration/1000 + self.refresh)
+
     def start(self):
         self.draw()
         self.root.mainloop()
@@ -157,30 +161,47 @@ class Window:
         t = time.time()
         self.canvas.delete('clearable')
 
-        self.camera.turn(*self.mouse_to_angles())
-        root.event_generate('<Motion>', warp=True, x=self.w2, y=self.h2)  # stick mouse in the middle
+        self.camera.turn(*self.mouse_to_angles())  # stick mouse in the middle
+        self.root.event_generate(
+            '<Motion>',
+            warp=True,
+            x=self.w2,
+            y=self.h2
+        )
         self.mouse = [0, 0]
-        
+
         converted_points = []
-        
+
         for v in self.shape.points:
             converted = projection(v, self.camera, self.centre)
             converted_points.append(converted)
-            #draw_circle(converted, 3-v.value[2], canvas, 'red')
+#            draw_circle(converted, 3-v.value[2], canvas, 'red')
 
-        faces = zip(self.shape.faces, self.shape.centres, self.shape.colours)
-        faces = sorted(faces, key=lambda x: (x[1]-self.camera.pos).length, reverse=True)  # sort faces by distance between camera and their centre
+        faces = zip(
+            self.shape.faces,
+            self.shape.centres,
+            self.shape.colours
+        )
+        faces = sorted(  # sort faces by distance of centre from camera
+            faces,
+            key=lambda x: (x[1] - self.camera.pos).length,
+            reverse=True
+        )
         for f, _, col in faces:
             self.canvas.create_polygon(
                 *(converted_points[x].value for x in f),
                 tag='clearable',
                 fill=col
             )
-            
+
         for p1, p2 in self.shape.lines:
             p1_vect = converted_points[p1]
             p2_vect = converted_points[p2]
-            self.canvas.create_line(*p1_vect.value, *p2_vect.value, tag='clearable')
+            self.canvas.create_line(
+                *p1_vect.value,
+                *p2_vect.value,
+                tag='clearable'
+            )
 
         self.shape.transform(obj_rotator)  # yo linear algebra works
 
@@ -189,7 +210,7 @@ class Window:
 
         if not self.paused:
             self.root.after(self.refresh, self.draw)
-    
+
     def turn_input(self, event):
         if self.paused:
             return
@@ -199,22 +220,22 @@ class Window:
                 self.mouse[1] += event.y - self.centre.value[1]
         elif event.type == EventType.Key:  # handle key presses
             v = self.KEY_BINDINGS.get(event.char)
-            v *= pi/64  # TODO make sensitivity?
+            v *= pi / 64  # TODO make sensitivity?
             self.camera.turn(*v.value)
-    
+
     def move_input(self, event):
         if self.paused:
             return
         v = self.KEY_BINDINGS.get(event.char)
         self.camera.move(v)
-    
-    def mouse_to_angles(self):  # x-rotation depends on y-position of mouse, and vice versa
+
+    def mouse_to_angles(self):
         mx, my = self.mouse
         self.mouse = [0,0]
-        x_angle = -my*pi/1000  # TODO make denominator the sensitivity?
-        z_angle = -mx*pi/1000  # negative mouse corresponds to positive angle change
+        x_angle = -my * pi / 1000  # TODO make denominator the sensitivity?
+        z_angle = -mx * pi / 1000  # mx < 0  <=>  delta θz > 0
         return x_angle, z_angle
-    
+
     def update_text(self):
         self.infobox.draw(  # fill these lines automatically?
             self.camera.pos.value[0],
@@ -224,11 +245,11 @@ class Window:
             self.camera.z_angle,
             self.fps,
         )
-    
+
     def pause_motion(self, *args):
         if not self.paused:
             self.toggle_motion()  # keep the pause code in one place
-    
+
     def toggle_motion(self, *args):
         self.paused = not self.paused
         self.root.config(cursor=CURSOR_VIS[self.paused])
@@ -256,7 +277,7 @@ myShape = ShapeCombination(
 if __name__ == '__main__':
     root = Tk()
     canvas = Canvas(root)
-    
+
     window = Window(root, canvas, myShape)
     window.start()
 
