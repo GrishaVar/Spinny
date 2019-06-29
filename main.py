@@ -8,23 +8,12 @@ from collections import OrderedDict
 
 from shapes import ShapeCombination, Cube, SquarePyramid
 from matrix import Matrix as M, Vector as V
+from common import M3
 
 
 CURSOR_VIS = {False: 'none', True: ''}
-
-def z_rotator(angle):  # right hand rule rotation!
-    return M(  # y unchanged, x and z move along a circle
-        [cos(angle), -sin(angle), 0],
-        [sin(angle), cos(angle), 0],
-        [0, 0, 1],
-    )
-def x_rotator(angle):
-    return M(  # x unchanged, y and z move along a circle
-        [1, 0, 0],
-        [0, cos(angle), -sin(angle)],
-        [0, sin(angle), cos(angle)],
-    )
-obj_rotator = z_rotator(pi/32)  # very small angle
+PAUSE_TEXT = {False: '', True: 'PAUSED'}
+obj_rotator = M3.z_rot(pi/32)  # very small angle
 
 # LA skript: matrix multiplication is associative!
 
@@ -41,8 +30,8 @@ def draw_circle(v, r, canvas, color='black'):
 
 def projection(v, camera, centre):
     v -= camera.pos  # camera is basically the origin after this
-    v = z_rotator(-camera.z_angle) * v  # rotate points on z-axis around camera
-    v = x_rotator(-camera.x_angle) * v  # in the opposite direction
+    v = M3.z_rot(-camera.z_angle) * v  # rotate points on z-axis around camera
+    v = M3.x_rot(-camera.x_angle) * v  # in the opposite direction
     
     sx = 1/v.length  # more distance => point closer to middle (?)
     sy = 1/v.length
@@ -88,7 +77,7 @@ class Camera:
         self.pos += v*self.speed
     
     def turn(self, rad_x, rad_z):
-        rot_matrix = x_rotator(rad_x) * z_rotator(rad_z)  # two M*v would be (3x) faster, but this is waay cooler
+        rot_matrix = M3.x_rot(rad_x) * M3.z_rot(rad_z)  # two M*v would be (3x) faster, but this is waay cooler
         self.view = rot_matrix * self.view
 
 
@@ -115,7 +104,7 @@ class InfoBox:
         obj = self.canvas.create_text(
             self.x+2,
             self.y+2 + 17*self.counter,
-            anchor="nw",
+            anchor='nw',
             font='Arial 13',
             tag='infobox',
         )
@@ -179,7 +168,7 @@ class Window:
         self.camera = Camera()
         self.mouse = [0, 0]
         self.paused = False
-        self.paused_text = self.canvas.create_text(self.w2, 10, anchor="n", font='Arial 50')
+        self.paused_text = self.canvas.create_text(self.w2, 10, anchor='n', font='Arial 50')
         
         self.infobox = InfoBox(self.canvas, (5,5), 100)
         self.infobox.add('x', default='X = {}', rounding=2)
@@ -295,10 +284,9 @@ class Window:
     def toggle_motion(self, *args):
         self.paused = not self.paused
         self.root.config(cursor=CURSOR_VIS[self.paused])
-        self.canvas.itemconfig(self.paused_text, text='PAUSED')
+        self.canvas.itemconfig(self.paused_text, text=PAUSE_TEXT[self.paused])
         if not self.paused:
             self.draw()
-            self.canvas.itemconfig(self.paused_text, text='')
 
     def quit(self, *args):
         self.root.destroy()

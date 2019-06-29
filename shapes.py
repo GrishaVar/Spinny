@@ -1,17 +1,16 @@
-from matrix import Matrix, Vector
+from matrix import Vector as V
+from common import V3, M3
 
-conv = lambda v : Vector(*v)
-v0 = Vector(0,0,0)
-m1 = Matrix((1,0,0),(0,1,0),(0,0,1))
+conv = lambda v : V(*v)
 
 class Shape():
-    DEFAULT_POINTS = [v0]  # first points is the 'anchor'
+    DEFAULT_POINTS = [V3.z]  # first points is the 'anchor'
     LINES = []
     FACES = []
     CENTRES = []
     COLOURS = []
 
-    def __init__(self, shift=v0, trans=m1):
+    def __init__(self, shift=V3.z, trans=M3.e):
         self.reset()
         self.move_to(shift)
         self.transform(trans)
@@ -79,7 +78,7 @@ class Shape():
 
 
 class ShapeCombination(Shape):
-    def __init__(self, *shapes, shift=v0, trans=m1):
+    def __init__(self, *shapes, shift=V3.z, trans=M3.e):
         self.reset()
         for shape in shapes:
             offset = len(self.points)
@@ -112,18 +111,12 @@ class Cube(Shape):
         {4,5,6}, {4,6,7},
     ]
     CENTRES = list(map(conv, (
-        (1/3, 2/3, 0),
-        (2/3, 1/3, 0),
-        (2/3, 0, 1/3),
-        (1/3, 0, 2/3),
-        (1, 2/3, 1/3),
-        (1, 1/3, 2/3),
-        (1/3, 1, 1/3),
-        (2/3, 1, 2/3),
-        (0, 1/3, 1/3),
-        (0, 2/3, 2/3),
-        (1/3, 2/3, 1),
-        (2/3, 1/3, 1),
+        (1/3, 2/3, 0), (2/3, 1/3, 0),
+        (2/3, 0, 1/3), (1/3, 0, 2/3),
+        (1, 2/3, 1/3), (1, 1/3, 2/3),
+        (2/3, 1, 1/3), (1/3, 1, 2/3),
+        (0, 2/3, 1/3), (0, 1/3, 2/3),
+        (1/3, 2/3, 1), (2/3, 1/3, 1),
     )))
     COLOURS = [
         'white', 'white',
@@ -152,8 +145,7 @@ class SquarePyramid(Shape):
         (1/2, 1/6, 1/3),
         (5/6, 1/2, 1/3),
         (1/2, 5/6, 1/3),
-        (1/3, 1/6, 0),
-        (1/2, 1/6, 1/3),
+        (1/3, 1/6, 0), (1/2, 1/6, 1/3),
     )))
     COLOURS = [
         'green','red', 'blue', 'orange',  
