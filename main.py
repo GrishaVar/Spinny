@@ -88,9 +88,9 @@ class Window:
         'd': V(1,0,0),
         ' ': V(0,0,1),
         'q': V(0,0,-1),
-        'i': V(1,0),
+        'i': V(-1,0),
         'j': V(0,1),
-        'k': V(-1,0),
+        'k': V(1,0),
         'l': V(0,-1),
     }
 
@@ -106,8 +106,8 @@ class Window:
 
         self.duration = 1
 
-        self.root.attributes('-zoomed', True)
-        self.root.config(cursor='none')
+        #self.root.attributes('-zoomed', True)
+        #self.root.config(cursor='none')
         self.canvas.pack(fill=BOTH, expand=1)
 
         self.centre = V(self.w2, self.h2)
