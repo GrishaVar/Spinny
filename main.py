@@ -98,16 +98,18 @@ class Window:
         self.root = root
         self.canvas = canvas
         self.shape = shape
-        self.width = 1366
-        self.height = 744
-
-        self.w2 = self.width / 2
-        self.h2 = self.height / 2
+        self.width = self.root.winfo_screenwidth()
+        self.height = self.root.winfo_screenheight()
+        #self.width, self.height = self.root.maxsize()
+        self.w2 = self.width // 2
+        self.h2 = self.height // 2
 
         self.duration = 1
 
-        # self.root.attributes('-zoomed', True)
-        # self.root.config(cursor='none')
+        self.root.title('3D Thing')
+        #self.root.attributes('-zoomed', True)
+        #self.root.attributes("-fullscreen", True)
+        self.root.geometry('{}x{}+0+0'.format(self.width, self.height))
         self.canvas.pack(fill=BOTH, expand=1)
 
         self.centre = V(self.w2, self.h2)
