@@ -12,6 +12,7 @@ class Shape():
     FACES = []
     CENTRES = []
     COLOURS = []
+    DIRECTIONS = []
 
     def __init__(self, shift=V3.z, trans=M3.e):
         self.reset()
@@ -28,19 +29,20 @@ class Shape():
         self.faces = self.FACES[:]
         self.centres = self.CENTRES[:]
         self.colours = self.COLOURS[:]
+        self.directions = self.DIRECTIONS[:]
 
     def move_to(self, pos):
-        change = pos - self.cur
-        self.points = [v + change for v in self.points]
-        self.centres = [v + change for v in self.centres]
+        self.move_by(pos-self.cur)
 
     def move_by(self, pos):
         self.points = [v + pos for v in self.points]
-        self.points = [v + pos for v in self.centres]
+        self.centres = [v + pos for v in self.centres]
+        #self.directions = [v + pos for v in self.directions]
 
     def transform(self, m):  # apply matrix transform to all points
         self.points = [m * v for v in self.points]
         self.centres = [m * v for v in self.centres]
+        self.directions = [m * v for v in self.directions]
         if m.det == 0:  # optimisation only needed if dimentions collapsed
             self.optimise()
 
@@ -70,14 +72,17 @@ class Shape():
         new_faces = []
         new_centres = []
         new_colours = []
-        for f,c,col in zip(self.faces, self.centres, self.colours):
+        new_directions = []
+        for f,c,col,d in zip(self.faces, self.centres, self.colours, self.directions):
             if len(f) > 2 and f not in new_faces:
                 new_faces.append(f)
                 new_centres.append(c)
                 new_colours.append(col)
+                new_directions.append(d)
         self.faces = new_faces
         self.centres = new_centres
         self.colours = new_colours
+        self.directions = new_directions
 
 
 class ShapeCombination(Shape):
@@ -91,6 +96,7 @@ class ShapeCombination(Shape):
             self.faces += [tuple(map(f,x)) for x in shape.faces]
             self.centres += shape.centres
             self.colours += shape.colours
+            self.directions += shape.directions
         self.optimise()
         self.move_to(shift)
         self.transform(trans)
@@ -129,6 +135,14 @@ class Cube(Shape):
         'green', 'green',
         '#603', '#603',
     ]
+    DIRECTIONS = list(map(conv, (
+        (0,0,-1), (0,0,-1),
+        (0,-1,0), (0,-1,0),
+        (1,0,0), (1,0,0),
+        (0,1,0), (0,1,0),
+        (-1,0,0), (-1,0,0),
+        (0,0,1), (0,0,1),
+    )))
 
 
 class SquarePyramid(Shape):
@@ -140,18 +154,25 @@ class SquarePyramid(Shape):
         {0,1}, {1,2}, {2,3}, {3,0},
         {0,4}, {1,4}, {2,4}, {3,4}]
     FACES = [
-        {0,1,4}, {0,3,4}, {2,3,4}, {1,2,4},
+        {0,3,4}, {2,3,4}, {1,2,4}, {0,1,4},
         {0,1,2}, {0,2,3},
     ]
     CENTRES = list(map(conv, (
-        (1/6, 1/2, 1/3),
         (1/2, 1/6, 1/3),
         (5/6, 1/2, 1/3),
         (1/2, 5/6, 1/3),
-        (1/3, 1/6, 0), (1/2, 1/6, 1/3),
+        (1/6, 1/2, 1/3),
+        (1/3, 2/3, 0), (2/3, 1/3, 0),
     )))
     COLOURS = [
-        'green','red', 'blue', 'orange',
-        '#603', '#603'
+        'red', 'blue', 'orange','green', 
+        'white', 'white',
     ]
+    DIRECTIONS = list(map(conv, (
+        (0,-1,1/2),
+        (1,0,1/2),
+        (0,1,1/2),
+        (-1,0,1/2),
+        (0,0,-1), (0,0,-1),
+    )))
 

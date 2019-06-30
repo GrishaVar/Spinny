@@ -121,6 +121,7 @@ class Window:
             anchor='n',
             font='Arial 50'
         )
+        self.pause_motion()
 
         self.infobox = InfoBox(self.canvas, (5,5), 100)
         self.infobox.add('x', default='X = {}', rounding=2)
@@ -180,21 +181,32 @@ class Window:
         faces = zip(
             self.shape.faces,
             self.shape.centres,
-            self.shape.colours
+            self.shape.colours,
+            self.shape.directions,
         )
         faces = sorted(  # sort faces by distance of centre from camera
             faces,
             key=lambda x: (x[1] - self.camera.pos).length,
             reverse=True
         )
-        for f, _, col in faces:
+        for f, c, col, d in faces:
+            if d.dot(self.camera.view) >= 0:
+                continue
             self.canvas.create_polygon(
                 *(converted_points[x].value for x in f),
                 tag='clearable',
-                fill=col
+                fill=col,
+                outline='black',
+            )
+            draw_circle(projection(c,self.camera,self.centre),2,self.canvas, col)
+            self.canvas.create_line(
+                *projection(c, self.camera, self.centre).value,
+                *projection(c+d, self.camera, self.centre).value,
+                tag='clearable',
             )
 
         for p1, p2 in self.shape.lines:
+            break
             p1_vect = converted_points[p1]
             p2_vect = converted_points[p2]
             self.canvas.create_line(
