@@ -1,6 +1,8 @@
+from math import sqrt
+
 class Matrix():
     def __init__(self, *rows):
-        self.value = tuple(tuple(x) for x in rows)
+        self.value = tuple(map(tuple, rows))
         self.n = len(rows)
         if self.n == 0:
             raise ValueError('Matrix of size zero')
@@ -18,28 +20,27 @@ class Matrix():
     
     @property
     def det(self):
-        if self._det is not None:  # kinda-sorta-memoised determinant
-            return self._det
-        if self.n != self.m:
-            self._det = 0
-        elif self.n == 1:
-            self._det = self.value[0][0]
-        elif self.n == 2:
-            v = self.value
-            self._det = v[0][0]*v[1][1] - v[0][1]*v[1][0]
-        elif self.n == 3:
-            v = self.value
-            self._det = (
-                v[0][0]*v[1][1]*v[2][2] +
-                v[0][1]*v[1][2]*v[2][0] +
-                v[0][2]*v[1][0]*v[2][1] -
-                v[0][2]*v[1][1]*v[2][0] -
-                v[0][1]*v[1][0]*v[2][2] -
-                v[0][0]*v[1][2]*v[2][1]
-            )  # I regret this
-        else:
-            raise NotImplementedError('oof dude')
-        return self.det
+        if self._det is None:  # kinda-sorta-memoised determinant
+            if self.n != self.m:
+                self._det = 0
+            elif self.n == 1:
+                self._det = self.value[0][0]
+            elif self.n == 2:
+                v = self.value
+                self._det = v[0][0]*v[1][1] - v[0][1]*v[1][0]
+            elif self.n == 3:
+                v = self.value
+                self._det = (
+                    v[0][0]*v[1][1]*v[2][2] +
+                    v[0][1]*v[1][2]*v[2][0] +
+                    v[0][2]*v[1][0]*v[2][1] -
+                    v[0][2]*v[1][1]*v[2][0] -
+                    v[0][1]*v[1][0]*v[2][2] -
+                    v[0][0]*v[1][2]*v[2][1]
+                )  # I regret this
+            else:
+                raise NotImplementedError('oof dude')
+        return self._det
 
     def __repr__(self):
         res_parts = []
@@ -123,7 +124,41 @@ class Matrix():
         return Vector(*Matrix.transpose(self).value[0])
 
     def copy(self):
-        return Matrix(*(self.value[:]))
+        return Matrix(*self.value)
+'''
+    def row_switch(self, i, j):
+        value = list(self.value)
+        temp = value[j]
+        value[j] = value[i]
+        value[i] = temp
+        self.value = tuple(value)
+    
+    def row_mult(self, i, m):
+        if m == 0:
+            raise ValueError("m can't be zero!")
+        m = Fraction(m)
+        value = list(self.value)
+        value[i] = tuple(m*x for x in value[i])
+        self.value = tuple(value)
+    
+    def row_add(self, i, j, m):
+        if m == 0:
+            raise ValueError("m can't be zero!")
+        m = Fraction(m)
+        value = list(self.value)
+        row = tuple(m*x for x in value[j])
+        value[i] = tuple(x+y for x,y in zip(value[i], row))
+        self.value = tuple(value)
+    
+    def row_echelon_form(self, track_det=False, sibling=None):
+        if sibling is not None and self.n != sibling.n:
+            raise ValueError('sibling has different height')
+        det = 1
+        cur = self.copy()
+        for i in range(cur.m):
+            for j in range(1, cur.n):
+                cur.row_add(j, 0, '-1/{}'.format())
+        '''
 
 
 class Vector(Matrix):  # these are saved as horizontal but treated as vertical.
@@ -136,7 +171,7 @@ class Vector(Matrix):  # these are saved as horizontal but treated as vertical.
         self._length = None
     
     def __repr__(self):
-        return '(' + (', '.join(map(str, self.value))) + ')ᵗ'
+        return '(' + (', '.join(str(x) for x in self.value)) + ')ᵗ'  # add rounding
 
     def __add__(self, other):
         if not isinstance(other, Vector):
@@ -147,7 +182,7 @@ class Vector(Matrix):  # these are saved as horizontal but treated as vertical.
 
     def __mul__(self, other):
         if not isinstance(other, Matrix):
-            return Vector(*[other*a for a in self.value])
+            return Vector(*(other*a for a in self.value))
         else:   # Matrix multiplication. v*m=m  m*v=v  v*v=v
             if self.m != other.n:
                 raise ValueError('Incompatible Sizes')
@@ -159,7 +194,7 @@ class Vector(Matrix):  # these are saved as horizontal but treated as vertical.
     @property
     def length(self):  # another semi-memoised expensive function
         if self._length is None:
-            self._length = sum([c**2 for c in self.value])**0.5
+            self._length = sqrt(sum([c**2 for c in self.value]))
         return self._length
 
     def to_matrix(self):
@@ -167,4 +202,20 @@ class Vector(Matrix):  # these are saved as horizontal but treated as vertical.
 
     def copy(self):
         return Vector(*self.value)
+
+    def dot(self, other):
+        if not isinstance(other, Vector):
+            raise TypeError('Incompatible type: {}'.format(type(other)))
+        turned = Matrix.transpose(self.to_matrix())
+        return (turned*other).value[0]  # matrix only has one element
+    
+    def cross(self, other):
+        if not isinstance(other, Vector):
+            raise TypeError('Incompatible type: {}'.format(type(other)))
+        if self.n != other.n:
+            raise ValueError('Incompatible Sizes')
+        M = Matrix((i3,j3,k3), self.value, other.value)  # Also exists for 7 dimentions... implement?
+        return -(M.det)  # don't look at this, it's disgusting but it's kinda cool
+
+i3, j3, k3 = Vector(1,0,0), Vector(0,1,0), Vector(0,0,1)
 
