@@ -46,14 +46,34 @@ class Camera:
     @property
     def z_angle(self):
         if not self.y:
-            return pi  # think of better solution
-        return atan(-self.x/self.y)  # negative x view is positive z rotation
+            if not self.x:
+                return 0
+            elif self.x < 0:
+                return pi / 2
+            else:
+                return 3 * pi / 2
+        offset = 0
+        if self.y < 0:
+            offset = pi
+            if self.x > 0:
+                offset *= -1
+        return offset + atan(-self.x/self.y)  # better way to do this?
 
     @property
     def x_angle(self):
         if not self.y:
-            return pi
-        return atan(self.z/self.y)
+            if not self.z:
+                return 0
+            elif self.z > 0:
+                return pi / 2
+            else:
+                return 3 * pi / 2
+        offset = 0
+        if self.y < 0:
+            offset = pi
+            if self.z < 0:
+                offset *= -1
+        return offset + atan(self.z/self.y)
 
     def move(self, v):
         self.pos += v*self.speed
