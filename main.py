@@ -107,8 +107,6 @@ class Window:
         self.duration = 1
 
         self.root.title('3D Thing')
-        #self.root.attributes('-zoomed', True)
-        #self.root.attributes("-fullscreen", True)
         self.root.geometry('{}x{}+0+0'.format(self.width, self.height))
         self.canvas.pack(fill=BOTH, expand=1)
 
@@ -192,13 +190,14 @@ class Window:
             reverse=True
         )
         for f, c, col, d in faces:
-            if self.camera.view.dot(c-self.camera.pos) < 0:
+            if self.camera.view.dot(c-self.camera.pos) <= 0:
                 # skip if face behind the camera
                 continue
-            if d.dot(self.camera.view) > 0 and d.dot(self.camera.pos-c) < 0:
-                # skip if camera is behind face and pointing in same direction
+
+            if d.dot(self.camera.pos-c) < 0:
+                # skip if camera is behind face
                 continue
-            
+
             self.canvas.create_polygon(
                 *(converted_points[x].value for x in f),
                 tag='clearable',
