@@ -79,6 +79,13 @@ class Shape():
                 new_centres.append(c)
                 new_colours.append(col)
                 new_directions.append(d)
+            elif f in new_faces:
+                i = new_faces.index(f)
+                if d.value != new_directions[i].value:
+                    del new_faces[i]
+                    del new_centres[i]
+                    del new_colours[i]
+                    del new_directions[i]
         self.faces = new_faces
         self.centres = new_centres
         self.colours = new_colours
