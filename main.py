@@ -192,20 +192,25 @@ class Window:
             reverse=True
         )
         for f, c, col, d in faces:
-            if d.dot(self.camera.view) >= 0:
+            if self.camera.view.dot(c-self.camera.pos) < 0:
+                # skip if face behind the camera
                 continue
+            if d.dot(self.camera.view) > 0 and d.dot(self.camera.pos-c) < 0:
+                # skip if camera is behind face and pointing in same direction
+                continue
+            
             self.canvas.create_polygon(
                 *(converted_points[x].value for x in f),
                 tag='clearable',
                 fill=col,
                 outline='black',
             )
-            draw_circle(projection(c,self.camera,self.centre),2,self.canvas, col)
-            self.canvas.create_line(
-                *projection(c, self.camera, self.centre).value,
-                *projection(c+d, self.camera, self.centre).value,
-                tag='clearable',
-            )
+#            draw_circle(projection(c,self.camera,self.centre),2,self.canvas, col)
+#            self.canvas.create_line(
+#                *projection(c, self.camera, self.centre).value,
+#                *projection(c+d, self.camera, self.centre).value,
+#                tag='clearable',
+#            )
 
         for p1, p2 in self.shape.lines:
             break
