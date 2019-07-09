@@ -125,7 +125,7 @@ class Matrix():
 
     def copy(self):
         return Matrix(*self.value)
-'''
+
     def row_switch(self, i, j):
         value = list(self.value)
         temp = value[j]
@@ -149,16 +149,6 @@ class Matrix():
         row = tuple(m*x for x in value[j])
         value[i] = tuple(x+y for x,y in zip(value[i], row))
         self.value = tuple(value)
-    
-    def row_echelon_form(self, track_det=False, sibling=None):
-        if sibling is not None and self.n != sibling.n:
-            raise ValueError('sibling has different height')
-        det = 1
-        cur = self.copy()
-        for i in range(cur.m):
-            for j in range(1, cur.n):
-                cur.row_add(j, 0, '-1/{}'.format())
-        '''
 
 
 class Vector(Matrix):  # these are saved as horizontal but treated as vertical.
