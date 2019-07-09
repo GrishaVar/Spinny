@@ -100,7 +100,6 @@ class Window:
         self.shape = shape
         self.width = self.root.winfo_screenwidth()
         self.height = self.root.winfo_screenheight()
-        #self.width, self.height = self.root.maxsize()
         self.w2 = self.width // 2
         self.h2 = self.height // 2
 
@@ -122,6 +121,7 @@ class Window:
             font='Arial 50'
         )
         self.pause_motion()
+        self.counter = 0
 
         self.infobox = InfoBox(self.canvas, (5,5), 100)
         self.infobox.add('x', default='X = {}', rounding=2)
@@ -152,7 +152,7 @@ class Window:
 
     @property
     def fps(self):
-        return 1000 / (self.duration/1000 + self.refresh)
+        return 1000 / (self.duration + self.refresh)
 
     def start(self):
         self.draw()
@@ -224,7 +224,10 @@ class Window:
         self.shape.transform(obj_rotator)  # yo linear algebra works
 
         self.update_text()
-        self.duration = time.time() - t
+        self.counter += 1
+        if not self.counter%5:
+            self.counter = 0
+            self.duration = (time.time()-t) * 1000
 
         if not self.paused:
             self.root.after(self.refresh, self.draw)
