@@ -103,8 +103,6 @@ class Window:
         self.w2 = self.width // 2
         self.h2 = self.height // 2
 
-        self.duration = 1
-
         self.root.title('3D Thing')
         self.root.geometry('{}x{}+0+0'.format(self.width, self.height))
         self.canvas.pack(fill=BOTH, expand=1)
@@ -121,7 +119,12 @@ class Window:
             font='Arial 50'
         )
         self.pause_motion()
+
         self.counter = 0
+        self.time_one = 0
+        self.time_min = float('inf')
+        self.time_tot = 0
+        self.time_max = 0
 
         self.infobox = InfoBox(self.canvas, (5,5), 100)
         self.infobox.add('x', default='X = {}', rounding=2)
@@ -129,7 +132,10 @@ class Window:
         self.infobox.add('z', default='Z = {}', rounding=2)
         self.infobox.add('θx', default='θx = {}', rounding=2)
         self.infobox.add('θz', default='θz = {}', rounding=2)
-        self.infobox.add('fps', default='FPS: {}', rounding=2)
+        self.infobox.add('fps', default='FPS: {}', rounding=1)
+        self.infobox.add('min', default='min {}ms', rounding=1)
+        self.infobox.add('frame', default='avg {}ms', rounding=1)
+        self.infobox.add('max', default='max {}ms', rounding=1)
 
         self.canvas.bind_all('<w>', self.move_input)
         self.canvas.bind_all('<a>', self.move_input)
@@ -152,7 +158,7 @@ class Window:
 
     @property
     def fps(self):
-        return 1000 / (self.duration + self.refresh)
+        return 1000 / (self.time_one + self.refresh)
 
     def start(self):
         self.draw()
@@ -194,7 +200,7 @@ class Window:
                 # skip if face behind the camera
                 continue
 
-            if d.dot(self.camera.pos-c) < 0:
+            if d.dot(self.camera.pos-c) <= 0:
                 # skip if camera is behind face
                 continue
 
@@ -204,12 +210,14 @@ class Window:
                 fill=col,
                 outline='black',
             )
-#            draw_circle(projection(c,self.camera,self.centre),2,self.canvas, col)
-#            self.canvas.create_line(
-#                *projection(c, self.camera, self.centre).value,
-#                *projection(c+d, self.camera, self.centre).value,
-#                tag='clearable',
-#            )
+
+            continue
+            draw_circle(projection(c,self.camera,self.centre),2,self.canvas, col)
+            self.canvas.create_line(
+                *projection(c, self.camera, self.centre).value,
+                *projection(c+d, self.camera, self.centre).value,
+                tag='clearable',
+            )
 
         for p1, p2 in self.shape.lines:
             break
@@ -223,11 +231,17 @@ class Window:
 
         self.shape.transform(obj_rotator)  # yo linear algebra works
 
-        self.update_text()
         self.counter += 1
-        if not self.counter%5:
-            self.counter = 0
-            self.duration = (time.time()-t) * 1000
+        self.update_text()
+        dur = (time.time() - t) * 1000
+        self.time_tot += dur
+        if dur < self.time_min:
+            self.time_min = dur
+        elif dur > self.time_max:
+            self.time_max = dur
+
+        if self.counter%5 == 0:
+            self.time_one = dur
 
         if not self.paused:
             self.root.after(self.refresh, self.draw)
@@ -265,6 +279,9 @@ class Window:
             self.camera.x_angle,
             self.camera.z_angle,
             self.fps,
+            self.time_min,
+            self.time_tot / self.counter,
+            self.time_max,
         )
 
     def pause_motion(self, *args):
