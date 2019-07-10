@@ -184,54 +184,36 @@ class Window:
             converted_points.append(converted)
 #            draw_circle(converted, 3-v.value[2], canvas, 'red')
 
-        all_faces = zip(
-            self.shape.faces,
-            self.shape.centres,
-            self.shape.colours,
-            self.shape.directions,
-        )
         faces = []
-
-        for f, c, col, d in all_faces:
-            if self.camera.view.dot(c-self.camera.pos) <= 0:
+        for face in self.shape.faces:
+            if self.camera.view.dot(face.centre-self.camera.pos) <= 0:
                 # skip if face behind the camera
                 continue
-            if d.dot(self.camera.pos-c) <= 0:
+            if face.direction.dot(self.camera.pos-face.centre) <= 0:
                 # skip if camera is behind face
                 continue
-
-            faces.append((f,c,col,d))
-
+            faces.append(face)
         faces = sorted(  # sort faces by distance of centre from camera
             faces,
-            key=lambda x: (x[1] - self.camera.pos).length,
+            key=lambda f: (f.centre - self.camera.pos).length,
             reverse=True
         )
 
-        for f, c, col, d in faces:
-            self.canvas.create_polygon(
-                *(converted_points[x].value for x in f),
-                tag='clearable',
-                fill=col,
-                outline='black',
-            )
+        for face in faces:
+            for tri in face.tri_iter():
+                self.canvas.create_polygon(
+                    *(converted_points[p].value for p in tri),
+                    tag='clearable',
+                    fill=face.colour,
+                    outline='black',
+                )
 
             continue
-            draw_circle(projection(c,self.camera,self.centre),2,self.canvas, col)
+            draw_circle(projection(face.centre,self.camera,self.centre),2,self.canvas, face.colour)
             self.canvas.create_line(
-                *projection(c, self.camera, self.centre).value,
-                *projection(c+d, self.camera, self.centre).value,
+                *projection(face.centre, self.camera, self.centre).value,
+                *projection(face.centre+face.direction, self.camera, self.centre).value,
                 tag='clearable',
-            )
-
-        for p1, p2 in self.shape.lines:
-            break
-            p1_vect = converted_points[p1]
-            p2_vect = converted_points[p2]
-            self.canvas.create_line(
-                *p1_vect.value,
-                *p2_vect.value,
-                tag='clearable'
             )
 
         self.shape.transform(obj_rotator)  # yo linear algebra works

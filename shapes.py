@@ -2,17 +2,53 @@ from matrix import Vector as V
 from common import V3, M3
 
 
-def conv(v):
-    return V(*v)
+class Face:
+    def __init__(self, parent, direction, colour, *points):
+        self.parent = parent
+        self.direction = direction
+        self.colour = colour
+        self.points = points
+
+        self.verts = len(self.points)
+        self.centre = 1/self.verts * sum(
+            self.parent.points[p] for p in self.points
+        )
+
+    def __eq__(self, other):
+        return set(self.points) == set(other.points)
+
+    def add_offset(self, offset):
+        self.points = [p + offset for p in self.points]
+
+    def move_by(self, pos):
+        self.centre += pos
+
+    def transform(self, m):
+        self.direction = m * self.direction
+        self.centre = m * self.centre
+
+    def tri_points(self, i):
+        return (
+            self.points[0],
+            self.points[i+1],
+            self.points[i+2]
+        )
+
+    def tri_iter(self):
+        return (self.tri_points(i) for i in range(self.verts-2))
+    
+    def copy(self):
+        return Face(
+            self.parent,
+            self.direction,
+            self.colour,
+            *self.points,
+        )
 
 
-class Shape():
-    DEFAULT_POINTS = [V3.z]  # first points is the 'anchor'
-    LINES = []
-    FACES = []
-    CENTRES = []
-    COLOURS = []
-    DIRECTIONS = []
+class Shape:
+    POINTS = ((0,0,0),)  # first points is the 'anchor'
+    FACES = ()
 
     def __init__(self, shift=V3.z, trans=M3.e):
         self.reset()
@@ -24,25 +60,21 @@ class Shape():
         return self.points[0]
 
     def reset(self):
-        self.points = self.DEFAULT_POINTS[:]
-        self.lines = self.LINES[:]
-        self.faces = self.FACES[:]
-        self.centres = self.CENTRES[:]
-        self.colours = self.COLOURS[:]
-        self.directions = self.DIRECTIONS[:]
+        self.points = [V(*v) for v in self.POINTS]
+        self.faces = [Face(self, V(*d), col, *p) for d, col, p in self.FACES]
 
     def move_to(self, pos):
         self.move_by(pos-self.cur)
 
     def move_by(self, pos):
         self.points = [v + pos for v in self.points]
-        self.centres = [v + pos for v in self.centres]
-        #self.directions = [v + pos for v in self.directions]
+        for f in self.faces:
+            f.move_by(pos)
 
     def transform(self, m):  # apply matrix transform to all points
         self.points = [m * v for v in self.points]
-        self.centres = [m * v for v in self.centres]
-        self.directions = [m * v for v in self.directions]
+        for f in self.faces:
+            f.transform(m)
         if m.det == 0:  # optimisation only needed if dimentions collapsed
             self.optimise()
 
@@ -52,7 +84,7 @@ class Shape():
         offset = 0
         for i, v in enumerate(self.points):
             for j, w in enumerate(seen_vects):  # O(n^2)?
-                if v.value == w.value:
+                if v == w:
                     changes[i] = j
                     offset += 1
                     break
@@ -61,35 +93,19 @@ class Shape():
                 changes[i] = i - offset
         self.points = seen_vects  # replace list with duplicates
 
-        self.lines = [{changes[i], changes[j]} for i,j in self.lines]
-        new_lines = []
-        for l in self.lines:
-            if len(l) == 2 and l not in new_lines:
-                new_lines.append(l)
-        self.lines = new_lines  # remove duplicate lines
-
-        self.faces = [set(map(changes.get, f)) for f in self.faces]
         new_faces = []
-        new_centres = []
-        new_colours = []
-        new_directions = []
-        for f,c,col,d in zip(self.faces, self.centres, self.colours, self.directions):
-            if len(f) > 2 and f not in new_faces:
-                new_faces.append(f)
-                new_centres.append(c)
-                new_colours.append(col)
-                new_directions.append(d)
-            elif f in new_faces:
-                i = new_faces.index(f)
-                if d.value != new_directions[i].value:
+        for face in self.faces:
+            face.points = list(map(changes.get, face.points))
+            if len(set(face.points)) < 3:
+                continue
+            if face in new_faces:
+                i = new_faces.index(face)
+                if face.direction != new_faces[i].direction:
                     del new_faces[i]
-                    del new_centres[i]
-                    del new_colours[i]
-                    del new_directions[i]
+                continue
+
+            new_faces.append(face)
         self.faces = new_faces
-        self.centres = new_centres
-        self.colours = new_colours
-        self.directions = new_directions
 
 
 class ShapeCombination(Shape):
@@ -97,89 +113,43 @@ class ShapeCombination(Shape):
         self.reset()
         for shape in shapes:
             offset = len(self.points)
-            f = lambda a: a + offset
             self.points += shape.points
-            self.lines += [(i1+offset, i2+offset) for i1,i2 in shape.lines]
-            self.faces += [tuple(map(f,x)) for x in shape.faces]
-            self.centres += shape.centres
-            self.colours += shape.colours
-            self.directions += shape.directions
+            for f in shape.faces:
+                f.parent = self
+                f.add_offset(offset)
+            self.faces += shape.faces
+
         self.optimise()
         self.move_to(shift)
         self.transform(trans)
 
 
 class Cube(Shape):
-    DEFAULT_POINTS = list(map(conv, (
-        (0,0,0), (0,1,0), (1,1,0), (1,0,0),
-        (0,0,1), (0,1,1), (1,1,1), (1,0,1),
-    )))
-    LINES = [
-        {0,1}, {1,2}, {2,3}, {3,0},
-        {4,5}, {5,6}, {6,7}, {7,4},
-        {0,4}, {1,5}, {2,6}, {3,7}]
-    FACES = [
-        {0,1,2}, {0,2,3},
-        {0,3,7}, {0,4,7},
-        {2,3,6}, {3,6,7},
-        {1,2,6}, {1,5,6},
-        {0,1,5}, {0,4,5},
-        {4,5,6}, {4,6,7},
-    ]
-    CENTRES = list(map(conv, (
-        (1/3, 2/3, 0), (2/3, 1/3, 0),
-        (2/3, 0, 1/3), (1/3, 0, 2/3),
-        (1, 2/3, 1/3), (1, 1/3, 2/3),
-        (2/3, 1, 1/3), (1/3, 1, 2/3),
-        (0, 2/3, 1/3), (0, 1/3, 2/3),
-        (1/3, 2/3, 1), (2/3, 1/3, 1),
-    )))
-    COLOURS = [
-        'white', 'white',
-        'red', 'red',
-        'blue', 'blue',
-        'orange', 'orange',
-        'green', 'green',
-        '#603', '#603',
-    ]
-    DIRECTIONS = list(map(conv, (
-        (0,0,-1), (0,0,-1),
-        (0,-1,0), (0,-1,0),
-        (1,0,0), (1,0,0),
-        (0,1,0), (0,1,0),
-        (-1,0,0), (-1,0,0),
-        (0,0,1), (0,0,1),
-    )))
+    POINTS = (
+        (0,0,0), (1,0,0), (1,1,0), (0,1,0),
+        (0,0,1), (1,0,1), (1,1,1), (0,1,1),
+    )
+
+    FACES = (
+        ((0,0,-1), '#603', (0,1,2,3)),
+        ((0,-1,0), 'red', (0,4,5,1)),
+        ((1,0,0), 'blue', (1,5,6,2)),
+        ((0,1,0), 'orange', (2,6,7,3)),
+        ((-1,0,0), 'green', (3,7,4,0)),
+        ((0,0,1), '#603', (4,7,6,5)),
+    )
 
 
 class SquarePyramid(Shape):
-    DEFAULT_POINTS = list(map(conv, (
-        (0,0,0), (0,1,0), (1,1,0), (1,0,0),
+    POINTS = (
+        (0,0,0), (1,0,0), (1,1,0), (0,1,0),
         (0.5, 0.5, 1),
-    )))
-    LINES = [
-        {0,1}, {1,2}, {2,3}, {3,0},
-        {0,4}, {1,4}, {2,4}, {3,4}]
-    FACES = [
-        {0,3,4}, {2,3,4}, {1,2,4}, {0,1,4},
-        {0,1,2}, {0,2,3},
-    ]
-    CENTRES = list(map(conv, (
-        (1/2, 1/6, 1/3),
-        (5/6, 1/2, 1/3),
-        (1/2, 5/6, 1/3),
-        (1/6, 1/2, 1/3),
-        (1/3, 2/3, 0), (2/3, 1/3, 0),
-    )))
-    COLOURS = [
-        'red', 'blue', 'orange','green', 
-        'white', 'white',
-    ]
-    DIRECTIONS = list(map(conv, (
-        (0,-1,1/2),
-        (1,0,1/2),
-        (0,1,1/2),
-        (-1,0,1/2),
-        (0,0,-1), (0,0,-1),
-    )))
+    )
+    FACES = (
+        ((0,-1,1/2), 'red', (0,4,1)),
+        ((1,0,1/2), 'blue', (1,4,2)),
+        ((0,1,1/2), 'orange', (2,4,3)),
+        ((-1,0,1/2), 'green', (3,4,0)),
+        ((0,0,-1), '#603', (0,1,2,3)),
+    )
 
