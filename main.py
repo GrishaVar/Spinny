@@ -184,26 +184,31 @@ class Window:
             converted_points.append(converted)
 #            draw_circle(converted, 3-v.value[2], canvas, 'red')
 
-        faces = zip(
+        all_faces = zip(
             self.shape.faces,
             self.shape.centres,
             self.shape.colours,
             self.shape.directions,
         )
+        faces = []
+
+        for f, c, col, d in all_faces:
+            if self.camera.view.dot(c-self.camera.pos) <= 0:
+                # skip if face behind the camera
+                continue
+            if d.dot(self.camera.pos-c) <= 0:
+                # skip if camera is behind face
+                continue
+
+            faces.append((f,c,col,d))
+
         faces = sorted(  # sort faces by distance of centre from camera
             faces,
             key=lambda x: (x[1] - self.camera.pos).length,
             reverse=True
         )
+
         for f, c, col, d in faces:
-            if self.camera.view.dot(c-self.camera.pos) <= 0:
-                # skip if face behind the camera
-                continue
-
-            if d.dot(self.camera.pos-c) <= 0:
-                # skip if camera is behind face
-                continue
-
             self.canvas.create_polygon(
                 *(converted_points[x].value for x in f),
                 tag='clearable',
