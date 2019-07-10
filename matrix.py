@@ -13,11 +13,11 @@ class Matrix():
             if len(row) != self.m:
                 raise ValueError('Marix with unequal row lengths')
         self._det = None
-    
+
     @property
     def size(self):
         return self.n, self.m
-    
+
     @property
     def det(self):
         if self._det is None:  # kinda-sorta-memoised determinant
@@ -48,13 +48,15 @@ class Matrix():
             res_parts.append('\t'.join(map(str, row)))
         res = ')\n('.join(res_parts)
         return '(' + res + ')'
-    
+
     def __add__(self, other):
+        if isinstance(other, int) and other == 0:
+            return self
         if not isinstance(other, Matrix):
             raise TypeError('Incompatible type: {}'.format(type(other)))
         if self.size != other.size:
             raise ValueError('Different Sizes')
-        
+
         res = []
         for i in range(self.n):
             row = []
@@ -62,7 +64,7 @@ class Matrix():
                 row.append(self.value[i][j] + other.value[i][j])
             res.append(row)
         return Matrix(*res)
-    
+
     def __mul__(self, other):
         res = []
         if not isinstance(other, Matrix):  # Scalar Multiplication
@@ -110,14 +112,17 @@ class Matrix():
         for x in range(other-1):
             res *= self
         return res
-    
+
     def __rpow__(self, other):
         raise TypeError('???')
-    
+
+    def __eq__(self, other):
+        return self.value == other.value
+
     @staticmethod
     def transpose(matr):
         return Matrix(*zip(*matr.value))
-    
+
     def to_vector(self):
         if self.m != 1:
             return ValueError('Not a vector')
@@ -132,7 +137,7 @@ class Matrix():
         value[j] = value[i]
         value[i] = temp
         self.value = tuple(value)
-    
+
     def row_mult(self, i, m):
         if m == 0:
             raise ValueError("m can't be zero!")
@@ -140,7 +145,7 @@ class Matrix():
         value = list(self.value)
         value[i] = tuple(m*x for x in value[i])
         self.value = tuple(value)
-    
+
     def row_add(self, i, j, m):
         if m == 0:
             raise ValueError("m can't be zero!")
@@ -159,11 +164,13 @@ class Vector(Matrix):  # these are saved as horizontal but treated as vertical.
             raise ValueError('Vector of size zero')
         self.m = 1
         self._length = None
-    
+
     def __repr__(self):
         return '(' + (', '.join(str(x) for x in self.value)) + ')ᵗ'  # add rounding
 
     def __add__(self, other):
+        if isinstance(other, int) and other == 0:  # allows sum()
+            return self
         if not isinstance(other, Vector):
             raise TypeError('Incompatible type: {}'.format(type(other)))
         if self.size != other.size:
@@ -198,7 +205,7 @@ class Vector(Matrix):  # these are saved as horizontal but treated as vertical.
             raise TypeError('Incompatible type: {}'.format(type(other)))
         turned = Matrix.transpose(self.to_matrix())
         return (turned*other).value[0]  # matrix only has one element
-    
+
     def cross(self, other):
         if not isinstance(other, Vector):
             raise TypeError('Incompatible type: {}'.format(type(other)))
