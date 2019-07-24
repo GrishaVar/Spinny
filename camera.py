@@ -22,64 +22,49 @@ class Camera:
     def __init__(
         self,
         pos=V(0,-10,0),
-        view=V(0,1,0),
+        angles=(0,0),
         speed=0.1,
         rot_speed=pi/64,
     ):
         self.pos = pos
-        self.view = view
+        self.x_angle, self.z_angle = angles
         self.speed = speed
         self.rot_speed = rot_speed
+        
+        self.angle_changed = False
+        self._rot_matrix = None
+        self._view = None
 
     @property
-    def x(self):
-        return self.view.value[0]
+    def rot_matrix(self):
+        if self.angle_changed or self._rot_matrix is None:
+            x = M3.x_rot(self.x_angle)
+            z = M3.z_rot(self.z_angle)
+            self._rot_matrix = x*z
+        return self._rot_matrix
 
     @property
-    def y(self):
-        return self.view.value[1]
-
-    @property
-    def z(self):
-        return self.view.value[2]
-
-    @property
-    def z_angle(self):
-        if not self.y:
-            if not self.x:
-                return 0
-            elif self.x < 0:
-                return pi / 2
-            else:
-                return 3 * pi / 2
-        offset = 0
-        if self.y < 0:
-            offset = pi
-            if self.x > 0:
-                offset *= -1
-        return offset + atan(-self.x/self.y)  # better way to do this?
-
-    @property
-    def x_angle(self):
-        if not self.y:
-            if not self.z:
-                return 0
-            elif self.z > 0:
-                return pi / 2
-            else:
-                return 3 * pi / 2
-        offset = 0
-        if self.y < 0:
-            offset = pi
-            if self.z < 0:
-                offset *= -1
-        return offset + atan(self.z/self.y)
+    def view(self):
+        if self.angle_changed or self._view is None:
+            res = V(0,1,0)
+            self._view = self.rot_matrix * res
+            self.angle_changed = False
+        return self._view
 
     def move(self, v):
         self.pos += v*self.speed
 
     def turn(self, rad_x, rad_z):
-        # two M*v would be (3x) faster, but this is waay cooler
-        rot_matrix = M3.x_rot(rad_x) * M3.z_rot(rad_z)
-        self.view = rot_matrix * self.view
+        limit = pi/2
+        if rad_z:
+            self.z_angle += rad_z
+            self.z_angle = self.z_angle % (2*pi)
+            self.angle_changed = True
+        if rad_x:
+            self.x_angle += rad_x
+            if self.x_angle > limit:
+                self.x_angle = limit
+            elif self.x_angle < -limit:
+                self.x_angle = -limit
+            self.angle_changed = True
 
