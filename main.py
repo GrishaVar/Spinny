@@ -186,10 +186,11 @@ class Window:
 
         faces = []
         for face in self.shape.faces:
-            if self.camera.view.dot(face.centre-self.camera.pos) <= 0:
+            cam_to_face = face.centre - self.camera.pos
+            if self.camera.view.dot(cam_to_face) <= 0:
                 # skip if face behind the camera
                 continue
-            if face.direction.dot(self.camera.pos-face.centre) <= 0:
+            if face.direction.dot(-cam_to_face) <= 0:
                 # skip if camera is behind face
                 continue
             faces.append(face)
