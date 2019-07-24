@@ -1,6 +1,7 @@
 from math import sqrt
 
-class Matrix():
+
+class Matrix:
     def __init__(self, *rows):
         self.value = tuple(map(tuple, rows))
         self.n = len(rows)
@@ -117,11 +118,11 @@ class Matrix():
         raise TypeError('???')
 
     def __eq__(self, other):
-        return self.value == other.value
+        return isinstance(other, Matrix) and self.value == other.value
 
     @staticmethod
-    def transpose(matr):
-        return Matrix(*zip(*matr.value))
+    def transpose(m):
+        return Matrix(*zip(*m.value))
 
     def to_vector(self):
         if self.m != 1:
@@ -141,7 +142,6 @@ class Matrix():
     def row_mult(self, i, m):
         if m == 0:
             raise ValueError("m can't be zero!")
-        m = Fraction(m)
         value = list(self.value)
         value[i] = tuple(m*x for x in value[i])
         self.value = tuple(value)
@@ -149,7 +149,6 @@ class Matrix():
     def row_add(self, i, j, m):
         if m == 0:
             raise ValueError("m can't be zero!")
-        m = Fraction(m)
         value = list(self.value)
         row = tuple(m*x for x in value[j])
         value[i] = tuple(x+y for x,y in zip(value[i], row))
@@ -213,6 +212,12 @@ class Vector(Matrix):  # these are saved as horizontal but treated as vertical.
             raise ValueError('Incompatible Sizes')
         M = Matrix((i3,j3,k3), self.value, other.value)  # Also exists for 7 dimentions... implement?
         return -(M.det)  # don't look at this, it's disgusting but it's kinda cool
+
+    def project(self, basis):
+        res = Vector(0, 0, 0)
+        for base in basis:
+            res += (self.dot(base)/base.dot(base)) * base
+        return res
 
 i3, j3, k3 = Vector(1,0,0), Vector(0,1,0), Vector(0,0,1)
 
