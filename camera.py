@@ -52,7 +52,7 @@ class Camera:
         return self._view
 
     def move(self, v):
-        self.pos += v*self.speed
+        self.pos += self.rot_matrix * (v*self.speed)
 
     def turn(self, rad_x, rad_z):
         limit = pi/2
