@@ -9,8 +9,8 @@ def projection(v, camera, centre):
     v = M3.z_rot(-camera.z_angle) * v  # rotate points on z-axis around camera
     v = M3.x_rot(-camera.x_angle) * v  # in the opposite direction
 
-    sx = 1/v.length  # more distance => point closer to middle (?)
-    sy = 1/v.length
+    sx = 1/v.value[1]  # more distance => point closer to middle (?)
+    sy = 1/v.value[1]
     sx *= 800  # zoom way in (original pyramid is tiny)
     sy *= -800  # tk has y pointing down
     res = M((sx, 0, 0), (0, 0, sy)) * v  # Apply transform from Q3 to Q2
