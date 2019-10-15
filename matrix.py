@@ -210,7 +210,19 @@ class Vector(Matrix):  # these are saved as horizontal but treated as vertical.
             raise TypeError('Incompatible type: {}'.format(type(other)))
         if self.n != other.n:
             raise ValueError('Incompatible Sizes')
-        M = Matrix((i3,j3,k3), self.value, other.value)  # Also exists for 7 dimentions... implement?
+        if self.n != 3:  # Also exists for 7 dimentions... implement?
+            raise ValueError('Non-3 dimention')
+
+        a1, a2, a3 = self.value
+        b1, b2, b3 = other.value
+
+        s1 = a2 * b3 - a3 * b2
+        s2 = a3 * b1 - a1 * b3
+        s3 = a1 * b2 - a2 * b1
+
+        return Vector(s1, s2, s3)
+
+        M = Matrix((i3,j3,k3), self.value, other.value)
         return -(M.det)  # don't look at this, it's disgusting but it's kinda cool
 
     def project(self, basis):
@@ -218,6 +230,4 @@ class Vector(Matrix):  # these are saved as horizontal but treated as vertical.
         for base in basis:
             res += (self.dot(base)/base.dot(base)) * base
         return res
-
-i3, j3, k3 = Vector(1,0,0), Vector(0,1,0), Vector(0,0,1)
 

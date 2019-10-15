@@ -76,3 +76,4 @@ class Camera:
     def set_angle_update(self):
         self.view_outdated = True
         self.rot_matrix_outdated = True
+
