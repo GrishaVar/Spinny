@@ -17,6 +17,14 @@ obj_rotator = M3.z_rot(pi / 32)  # very small angle
 
 
 def draw_circle(v, r, canvas, color='black'):
+    """
+    Draws circle on canvas using tk's oval method.
+    :param v: vector of circle centre
+    :param r: radius of circle in pixels
+    :param canvas: canvas object
+    :param color: colour of circle
+    :return: canvas oval object
+    """
     x,y = v.value
     if r < 0:
         r = 0
@@ -29,6 +37,17 @@ def draw_circle(v, r, canvas, color='black'):
 
 
 class InfoBox:
+    """
+    Draws box with runtime for debug information.
+
+    add(self, item, default='', rounding=None) adds item to box.
+    draw(self, *args) re-draws box with updated information.
+
+    canvas: Given tk Canvas object.
+    x, y: ints, top-left position of box.
+    width: int, with of box in pixels.
+    items: OrderedDict of given info lines.
+    """
     def __init__(self, canvas, pos, width, fill='white', border='black'):
         self.canvas = canvas
         self.x, self.y = pos
@@ -46,6 +65,12 @@ class InfoBox:
         )
 
     def add(self, item, default='', rounding=None):
+        """
+        Add item to InfoBox.
+        :param item: str, identifier
+        :param default: str, text to display
+        :param rounding: int, rounding
+        """
         if item in self.items:
             return  # TODO: what should I do here?
         obj = self.canvas.create_text(
@@ -60,6 +85,10 @@ class InfoBox:
         self.resize_box()
 
     def draw(self, *args):
+        """
+        Draws/Updates InfoBox with given args.
+        :param args: iterable of arguments for each item, in order
+        """
         if len(args) != len(self.items):
             raise TypeError('Too many/few arguments')
         self.canvas.tag_raise(self.text_box)
@@ -235,6 +264,7 @@ class Window:
             self.root.after(self.refresh, self.draw)
 
     def turn_input(self, event):
+        """Handles tk events for turning (mouse and keyboard)."""
         if self.paused:
             return
         if event.type == EventType.Motion:  # handle mouse movement
@@ -247,12 +277,14 @@ class Window:
             self.camera.turn(*v.value)
 
     def move_input(self, event):
+        """Handles tk events for moving."""
         if self.paused:
             return
         v = self.KEY_BINDINGS.get(event.char)
         self.camera.move(v)
 
-    def mouse_to_angles(self):
+    def mouse_to_angles(self):  # move to Camera? Doesn't use tk.
+        """Converts mouse position to x and z angles in radians."""
         mx, my = self.mouse
         self.mouse = [0,0]
         x_angle = -my * pi / 1000  # TODO make denominator the sensitivity?
@@ -260,6 +292,7 @@ class Window:
         return x_angle, z_angle
 
     def update_text(self):
+        """Updates InfoBox."""
         self.infobox.draw(  # fill these lines automatically?
             self.camera.pos.value[0],
             self.camera.pos.value[1],
@@ -273,10 +306,12 @@ class Window:
         )
 
     def pause_motion(self, *args):
+        """Pauses app. Allows tk Event arguments."""
         if not self.paused:
             self.toggle_motion()  # keep the pause code in one place
 
     def toggle_motion(self, *args):
+        """Toggles app pause. Allows tk Event arguments."""
         self.paused = not self.paused
         self.root.config(cursor=CURSOR_VIS[self.paused])
         self.canvas.itemconfig(self.paused_text, text=PAUSE_TEXT[self.paused])
@@ -287,6 +322,7 @@ class Window:
         self.root.destroy()
 
     def reset_camera(self, *args):
+        """Creates new Camera, resetting position and angles. Allows tk Event arguments."""
         self.camera = Camera()  # TODO add a way of resetting to non-standard camera?
 
 myShape = ShapeCombination(

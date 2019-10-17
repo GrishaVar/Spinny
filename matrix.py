@@ -2,6 +2,23 @@ from math import sqrt
 
 
 class Matrix:
+    """
+    Matrix implementation.
+
+    Supports addition (+), subtraction (-),
+    negation (-m), multiplication (scalar, matrix) (*),
+    powers (**).
+
+    det(self) returns determinant (memoised).
+    transpose(m) returns m transposed.
+    row_switch(self, i, j) elementary row operation swap.
+    row_mult(self, i, m) elementary row operation multiply.
+    row_add(self, i, j, m) elementary row operation add.
+
+    value: tuple of values.
+    n: number of rows.
+    m: number of columns.
+    """
     def __init__(self, *rows):
         self.value = tuple(map(tuple, rows))
         self.n = len(rows)
@@ -12,7 +29,7 @@ class Matrix:
             if len(row) == 0:
                 raise ValueError('Matrix of size zero')
             if len(row) != self.m:
-                raise ValueError('Marix with unequal row lengths')
+                raise ValueError('Matrix with unequal row lengths')
         self._det = None
 
     @property
@@ -21,6 +38,10 @@ class Matrix:
 
     @property
     def det(self):
+        """
+        Calculate and store determinant.
+        :return: int
+        """
         if self._det is None:  # kinda-sorta-memoised determinant
             if self.n != self.m:
                 self._det = 0
@@ -67,6 +88,7 @@ class Matrix:
         return Matrix(*res)
 
     def __mul__(self, other):
+        """Scalar and matrix multiplication."""
         res = []
         if not isinstance(other, Matrix):  # Scalar Multiplication
             for i in range(self.n):
@@ -125,6 +147,10 @@ class Matrix:
         return Matrix(*zip(*m.value))
 
     def to_vector(self):
+        """
+        Converts single-column matrix into a vector.
+        :return: Vector
+        """
         if self.m != 1:
             return ValueError('Not a vector')
         return Vector(*Matrix.transpose(self).value[0])
@@ -133,6 +159,11 @@ class Matrix:
         return Matrix(*self.value)
 
     def row_switch(self, i, j):
+        """
+        Swap row positions.
+        :param i: index of row 1
+        :param j: index of row 2
+        """
         value = list(self.value)
         temp = value[j]
         value[j] = value[i]
@@ -140,6 +171,11 @@ class Matrix:
         self.value = tuple(value)
 
     def row_mult(self, i, m):
+        """
+        Multiply a row by a scalar.
+        :param i: index of row
+        :param m: non-zero scalar
+        """
         if m == 0:
             raise ValueError("m can't be zero!")
         value = list(self.value)
@@ -147,6 +183,13 @@ class Matrix:
         self.value = tuple(value)
 
     def row_add(self, i, j, m):
+        """
+        Add a row to another (with scaling).
+        :param i: index of row to be changed
+        :param j: index of row to add
+        :param m: non-zero scalar
+        :return:
+        """
         if m == 0:
             raise ValueError("m can't be zero!")
         value = list(self.value)
@@ -156,6 +199,18 @@ class Matrix:
 
 
 class Vector(Matrix):  # these are saved as horizontal but treated as vertical.
+    """
+    Subclass of Matrix for single-column matrices.
+
+    length(self) returns euclidean norm (memoised).
+    dot(self, other) returns dot product.
+    cross(self, other) return cross product.
+    project(self, basis) return projection onto basis.
+
+    value: tuple of values.
+    n: int, number of entries.
+    m: int, 1.
+    """
     def __init__(self, *points):
         self.value = tuple(points)
         self.n = len(self.value)
@@ -189,23 +244,38 @@ class Vector(Matrix):  # these are saved as horizontal but treated as vertical.
 
     @property
     def length(self):  # another semi-memoised expensive function
+        """
+        Returns euclidean norm of vector.
+        :return: int
+        """
         if self._length is None:
             self._length = sqrt(sum([c**2 for c in self.value]))
         return self._length
 
     def to_matrix(self):
+        """Converts Vector to Matrix."""
         return Matrix(*zip(self.value))
 
     def copy(self):
         return Vector(*self.value)
 
     def dot(self, other):
+        """
+        Dot Product.
+        :param other: Vector
+        :return: self·other
+        """
         if not isinstance(other, Vector):
             raise TypeError('Incompatible type: {}'.format(type(other)))
         turned = Matrix.transpose(self.to_matrix())
         return (turned*other).value[0]  # matrix only has one element
 
     def cross(self, other):
+        """
+        Cross Product. Only defined for 3 dimensional vectors.
+        :param other: Vector
+        :return: self⨯other
+        """
         if not isinstance(other, Vector):
             raise TypeError('Incompatible type: {}'.format(type(other)))
         if self.n != other.n:
@@ -226,8 +296,12 @@ class Vector(Matrix):  # these are saved as horizontal but treated as vertical.
         return -(M.det)  # don't look at this, it's disgusting but it's kinda cool
 
     def project(self, basis):
+        """
+        Return projection of vector in given basis.
+        :param basis: iterable of Vectors
+        :return: Vector
+        """
         res = Vector(0, 0, 0)
         for base in basis:
             res += (self.dot(base)/base.dot(base)) * base
         return res
-

@@ -100,4 +100,3 @@ class M3:
         )
         m._det = s**3
         return m
-

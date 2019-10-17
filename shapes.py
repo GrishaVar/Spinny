@@ -3,11 +3,25 @@ from common import V3, M3
 
 
 class Face:
+    """
+    Stores face's vertices as indeces of parent object and centre, direction as vectors.
+
+    move_by(self, pos) allows moving the face centre's position.
+    transform(self, m) allows matrix transformation of the centre and direction.
+    tri_iter(self) returns generator of face indeces broken up into triangles.
+
+    parent: Shape object.
+    direction: 3-Vector, face direction (faces are one-sided).
+    colour: str, hex colour.
+    points: list of vertix indeces.
+    verts: int, number of vertices.
+    centre: 3-Vector, centre of face.
+    """
     def __init__(self, parent, direction, colour, *points):
         self.parent = parent
         self.direction = direction
         self.colour = colour
-        self.points = points
+        self.points = points  # indices, not vectors
 
         self.verts = len(self.points)
         self.centre = 1/self.verts * sum(
@@ -18,12 +32,24 @@ class Face:
         return set(self.points) == set(other.points)
 
     def add_offset(self, offset):
+        """
+        Offset all indices in self.points by a number.
+        :param offset: int
+        """
         self.points = [p + offset for p in self.points]
 
     def move_by(self, pos):
+        """
+        Move face by an offset vector.
+        :param pos: Vector
+        """
         self.centre += pos
 
     def transform(self, m):
+        """
+        Preform linear matrix transformation on face.
+        :param m: Matrix
+        """
         self.direction = m * self.direction
         self.centre = m * self.centre
 
@@ -35,6 +61,7 @@ class Face:
         )
 
     def tri_iter(self):
+        """Returns generator of face's triangles."""
         return (self.tri_points(i) for i in range(self.verts-2))
     
     def copy(self):
@@ -47,6 +74,17 @@ class Face:
 
 
 class Shape:
+    """
+    Stores vertices as Vectors and combines them with Face objects.
+
+    move_to(self, pos) moves Shape to a location (using achor point).
+    move_by(self, pos) moves Shape by a vector.
+    transform(self, m) allows matrix transformation of each vertex.
+    optimise(self) removes redundant vertices/faces.
+
+    points: list of 3-Vectors, vertices of shape.
+    faces: list of Faces.
+    """
     POINTS = ((0,0,0),)  # first points is the 'anchor'
     FACES = ()
 
@@ -60,25 +98,39 @@ class Shape:
         return self.points[0]
 
     def reset(self):
+        """Creates Vector and Face objects from given tuples."""
         self.points = [V(*v) for v in self.POINTS]
         self.faces = [Face(self, V(*d), col, *p) for d, col, p in self.FACES]
 
     def move_to(self, pos):
+        """
+        Move Shape to a position.
+        :param pos: Vector
+        """
         self.move_by(pos-self.cur)
 
     def move_by(self, pos):
+        """
+        Move Shape by an offset.
+        :param pos: Vector
+        """
         self.points = [v + pos for v in self.points]
         for f in self.faces:
             f.move_by(pos)
 
-    def transform(self, m):  # apply matrix transform to all points
+    def transform(self, m):
+        """
+        Preform linear matrix transformation on shape.
+        :param m: Matrix
+        """
         self.points = [m * v for v in self.points]
         for f in self.faces:
             f.transform(m)
         if m.det == 0:  # optimisation only needed if dimentions collapsed
             self.optimise()
 
-    def optimise(self):  # remove duplicate points
+    def optimise(self):
+        """Removes duplicate points and faces in the shape."""
         seen_vects = []
         changes = {}
         offset = 0
@@ -109,6 +161,7 @@ class Shape:
 
 
 class ShapeCombination(Shape):
+    """Subclasses Shape, allows combining several shapes into one."""
     def __init__(self, *shapes, shift=V3.z, trans=M3.e):
         self.reset()
         for shape in shapes:
@@ -152,4 +205,3 @@ class SquarePyramid(Shape):
         ((-1,0,1/2), 'green', (3,4,0)),
         ((0,0,-1), '#603', (0,1,2,3)),
     )
-
