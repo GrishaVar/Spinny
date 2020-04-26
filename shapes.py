@@ -85,7 +85,7 @@ class Shape:
     points: list of 3-Vectors, vertices of shape.
     faces: list of Faces.
     """
-    POINTS = ((0,0,0),)  # first points is the 'anchor'
+    POINTS = ([0,0,0],)  # first points is the 'anchor'
     FACES = ()
 
     def __init__(self, shift=V3.z, trans=M3.e):
@@ -99,8 +99,8 @@ class Shape:
 
     def reset(self):
         """Creates Vector and Face objects from given tuples."""
-        self.points = [V(*v) for v in self.POINTS]
-        self.faces = [Face(self, V(*d), col, *p) for d, col, p in self.FACES]
+        self.points = [V(v) for v in self.POINTS]
+        self.faces = [Face(self, V(d), col, *p) for d, col, p in self.FACES]
 
     def move_to(self, pos):
         """
@@ -179,29 +179,29 @@ class ShapeCombination(Shape):
 
 class Cube(Shape):
     POINTS = (
-        (0,0,0), (1,0,0), (1,1,0), (0,1,0),
-        (0,0,1), (1,0,1), (1,1,1), (0,1,1),
+        [0,0,0], [1,0,0], [1,1,0], [0,1,0],
+        [0,0,1], [1,0,1], [1,1,1], [0,1,1],
     )
 
     FACES = (
-        ((0,0,-1), '#603', (0,1,2,3)),
-        ((0,-1,0), 'red', (0,4,5,1)),
-        ((1,0,0), 'blue', (1,5,6,2)),
-        ((0,1,0), 'orange', (2,6,7,3)),
-        ((-1,0,0), 'green', (3,7,4,0)),
-        ((0,0,1), '#603', (4,7,6,5)),
+        ([0,0,-1], '#603', (0,1,2,3)),
+        ([0,-1,0], 'red', (0,4,5,1)),
+        ([1,0,0], 'blue', (1,5,6,2)),
+        ([0,1,0], 'orange', (2,6,7,3)),
+        ([-1,0,0], 'green', (3,7,4,0)),
+        ([0,0,1], '#603', (4,7,6,5)),
     )
 
 
 class SquarePyramid(Shape):
     POINTS = (
-        (0,0,0), (1,0,0), (1,1,0), (0,1,0),
-        (0.5, 0.5, 1),
+        [0,0,0], [1,0,0], [1,1,0], [0,1,0],
+        [0.5, 0.5, 1],
     )
     FACES = (
-        ((0,-1,1/2), 'red', (0,4,1)),
-        ((1,0,1/2), 'blue', (1,4,2)),
-        ((0,1,1/2), 'orange', (2,4,3)),
-        ((-1,0,1/2), 'green', (3,4,0)),
-        ((0,0,-1), '#603', (0,1,2,3)),
+        ([0,-1,1/2], 'red', (0,4,1)),
+        ([1,0,1/2], 'blue', (1,4,2)),
+        ([0,1,1/2], 'orange', (2,4,3)),
+        ([-1,0,1/2], 'green', (3,4,0)),
+        ([0,0,-1], '#603', (0,1,2,3)),
     )

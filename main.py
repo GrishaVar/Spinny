@@ -25,7 +25,7 @@ def draw_circle(v, r, canvas, color='black'):
     :param color: colour of circle
     :return: canvas oval object
     """
-    x,y = v.value
+    x,y = v._value
     if r < 0:
         r = 0
 
@@ -111,16 +111,16 @@ class InfoBox:
 
 class Window:
     KEY_BINDINGS = {
-        'w': V(0,1,0),
-        'a': V(-1,0,0),
-        's': V(0,-1,0),
-        'd': V(1,0,0),
-        ' ': V(0,0,1),
-        'q': V(0,0,-1),
-        'i': V(1,0),
-        'j': V(0,1),
-        'k': V(-1,0),
-        'l': V(0,-1),
+        'w': V([0,1,0]),
+        'a': V([-1,0,0]),
+        's': V([0,-1,0]),
+        'd': V([1,0,0]),
+        ' ': V([0,0,1]),
+        'q': V([0,0,-1]),
+        'i': V([1,0]),
+        'j': V([0,1]),
+        'k': V([-1,0]),
+        'l': V([0,-1]),
     }
 
     def __init__(self, root, canvas, shape):
@@ -136,7 +136,7 @@ class Window:
         self.root.geometry('{}x{}+0+0'.format(self.width, self.height))
         self.canvas.pack(fill=BOTH, expand=1)
 
-        self.centre = V(self.w2, self.h2)
+        self.centre = V([self.w2, self.h2])
         self.refresh = 30
         self.camera = Camera()
         self.mouse = [0, 0]
@@ -211,7 +211,7 @@ class Window:
         for v in self.shape.points:
             converted = projection(v, self.camera, self.centre)
             converted_points.append(converted)
-#            draw_circle(converted, 3-v.value[2], canvas, 'red')
+#            draw_circle(converted, 3-v._value[2], canvas, 'red')
 
         faces = []
         for face in self.shape.faces:
@@ -232,17 +232,17 @@ class Window:
         for face in faces:
             for tri in face.tri_iter():
                 self.canvas.create_polygon(
-                    *(converted_points[p].value for p in tri),
+                    *(converted_points[p]._value for p in tri),
                     tag='clearable',
                     fill=face.colour,
-                    outline='black',
+                    #outline='black',
                 )
 
             continue
             draw_circle(projection(face.centre,self.camera,self.centre),2,self.canvas, face.colour)
             self.canvas.create_line(
-                *projection(face.centre, self.camera, self.centre).value,
-                *projection(face.centre+face.direction, self.camera, self.centre).value,
+                *projection(face.centre, self.camera, self.centre)._value,
+                *projection(face.centre+face.direction, self.camera, self.centre)._value,
                 tag='clearable',
             )
 
@@ -268,13 +268,13 @@ class Window:
         if self.paused:
             return
         if event.type == EventType.Motion:  # handle mouse movement
-            if (event.x, event.y) != self.centre.value:
-                self.mouse[0] += event.x - self.centre.value[0]
-                self.mouse[1] += event.y - self.centre.value[1]
+            if (event.x, event.y) != self.centre._value:
+                self.mouse[0] += event.x - self.centre._value[0]
+                self.mouse[1] += event.y - self.centre._value[1]
         elif event.type == EventType.Key:  # handle key presses
             v = self.KEY_BINDINGS.get(event.char)
             v *= pi / 64  # TODO make sensitivity?
-            self.camera.turn(*v.value)
+            self.camera.turn(*v._value)
 
     def move_input(self, event):
         """Handles tk events for moving."""
@@ -294,9 +294,9 @@ class Window:
     def update_text(self):
         """Updates InfoBox."""
         self.infobox.draw(  # fill these lines automatically?
-            self.camera.pos.value[0],
-            self.camera.pos.value[1],
-            self.camera.pos.value[2],
+            self.camera.pos._value[0],
+            self.camera.pos._value[1],
+            self.camera.pos._value[2],
             self.camera.x_angle,
             self.camera.z_angle,
             self.fps,
@@ -326,14 +326,14 @@ class Window:
         self.camera = Camera()  # TODO add a way of resetting to non-standard camera?
 
 myShape = ShapeCombination(
-    Cube(V(0,0,0)),
-    Cube(V(0,0,1)),
-    SquarePyramid(V(0,0,2)),
-    Cube(V(2,0,0)),
-    Cube(V(2,0,1)),
-    SquarePyramid(V(2,0,2)),
-    Cube(V(1,0,1)),
-    shift=V(-1.5,-0.5,-1.5),
+    Cube(V([0,0,0])),
+    Cube(V([0,0,1])),
+    SquarePyramid(V([0,0,2])),
+    Cube(V([2,0,0])),
+    Cube(V([2,0,1])),
+    SquarePyramid(V([2,0,2])),
+    Cube(V([1,0,1])),
+    shift=V([-1.5,-0.5,-1.5]),
 )
 
 if __name__ == '__main__':
