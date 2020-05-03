@@ -5,7 +5,7 @@ from tkinter import Tk, Canvas, BOTH, EventType
 from math import pi
 from collections import OrderedDict
 
-from shapes import ShapeCombination, Cube, SquarePyramid
+from shapes import ShapeCombination, Cube, SquarePyramid, Octagon
 from matrix import Vector as V
 from common import M3
 from camera import Camera, projection
@@ -325,7 +325,14 @@ class Window:
         """Creates new Camera, resetting position and angles. Allows tk Event arguments."""
         self.camera = Camera()  # TODO add a way of resetting to non-standard camera?
 
+
 myShape = ShapeCombination(
+    Octagon(V([0,0,0]))  # v pretty
+
+
+)
+
+"""
     Cube(V([0,0,0])),
     Cube(V([0,0,1])),
     SquarePyramid(V([0,0,2])),
@@ -334,7 +341,7 @@ myShape = ShapeCombination(
     SquarePyramid(V([2,0,2])),
     Cube(V([1,0,1])),
     shift=V([-1.5,-0.5,-1.5]),
-)
+    """
 
 if __name__ == '__main__':
     root = Tk()

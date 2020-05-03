@@ -5,14 +5,14 @@ class VectorSpace:
     def __add__(self, other):
         raise NotImplementedError("Addition not implemented")
 
-    def __radd__(self, other):  # Vector Space addition is commutatitve
+    def __radd__(self, other):  # Vector Space addition is commutative
         return self + other
 
     def __mul__(self, other):
         raise NotImplementedError('Scaling not implemented')
 
-    def __rmul__(self, other):  # Vector Space scaling is commutatitve
-        return self * other;
+    def __rmul__(self, other):  # Vector Space scaling is commutative
+        return self * other
 
     def __neg__(self):
         return self * -1
@@ -74,7 +74,7 @@ class Matrix(VectorSpace):
         Calculate and store determinant.
         :return: int
         """
-        if self._det is None:  # kinda-sorta-memoised determinant
+        if self._det is None:  # kinda-sorta-memorised determinant
             v = self._value
             if self.n != self.m:
                 self._det = 0
@@ -122,7 +122,7 @@ class Matrix(VectorSpace):
     def __add__(self, other):
         if other == 0:  # allows sum()
             return self
-        #if not isinstance(other, Matrix):
+        # if not isinstance(other, Matrix):
         #    raise TypeError('Incompatible type: {}'.format(type(other)))
         if self.size != other.size:  # TODO get rid of this? will cause error anyway
             raise ValueError('Different Sizes')
@@ -130,7 +130,7 @@ class Matrix(VectorSpace):
         res = []
         res_append = res.append  # avoid dots in expensive loops
         self_value = self._value
-        other_value = other._value
+        other_value = other._value  # other._value is private you need at add a other.getvalue()
         n, m = self.size
         for i in range(n):
             row = []
@@ -151,13 +151,13 @@ class Matrix(VectorSpace):
         res_append = res.append
 
         try:  # Matrix multiplication.   m*m=m   m*v=v
-            v2 = other._value
+            v2 = other._value  # other._value is private you need at add a other.getvalue()
             other_n, other_m = other.size
-            other_value = other._value
+            other_value = other._value  # other._value is private you need at add a other.getvalue()
             if self_m != other_n:
                 raise ValueError('Incompatible Sizes')
-            if other._IS_VECTOR:  # other is vector => return vector
-            #if isinstance(other, Vector):
+            if other._IS_VECTOR:  # other is vector => return vector  again other._IS_VECTOR is private
+            # if isinstance(other, Vector):
                 for i in range(self_n):
                     value = 0
                     for j in range(self_m):
@@ -175,8 +175,8 @@ class Matrix(VectorSpace):
                         row_append(value)
                     res_append(row)
                 res = Matrix(res)
-                if None not in (self._det, other._det):
-                    res._det = self._det * other._det  # might as well
+                if None not in (self._det, other._det):  # other._det is private
+                    res._det = self._det * other._det  # might as well # other._det is private
                 return res
         except AttributeError:  # Scalar Multiplication
             for i in range(self_n):
@@ -197,7 +197,7 @@ class Matrix(VectorSpace):
 
     @staticmethod
     def transpose(m):
-        return Matrix(list(zip(*m._value)))
+        return Matrix(list(zip(*m._value)))  # bro?
 
     def to_vector(self):
         """
@@ -354,7 +354,7 @@ class Vector(Matrix):  # these are saved as horizontal but treated as vertical.
             raise TypeError('Incompatible type: {}'.format(type(other)))
         if self.n != other.n:
             raise ValueError('Incompatible Sizes')
-        if self.n != 3:  # Also exists for 7 dimentions... implement?
+        if self.n != 3:  # Also exists for 7 dimensions... implement?
             raise ValueError('Non-3 dimention')
 
         a1, a2, a3 = self._value
@@ -377,6 +377,6 @@ class Vector(Matrix):  # these are saved as horizontal but treated as vertical.
         """
         res = Vector([0, 0, 0])
         for base in basis:
-            res += (self.dot(base)/base.dot(base)) * base
+            res += (self.dot(base)/base.dot(base)) * base  # inefficient
         return res
 

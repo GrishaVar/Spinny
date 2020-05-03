@@ -4,16 +4,16 @@ from common import V3, M3
 
 class Face:
     """
-    Stores face's vertices as indeces of parent object and centre, direction as vectors.
+    Stores face's vertices as indices of parent object and centre, direction as vectors.
 
     move_by(self, pos) allows moving the face centre's position.
     transform(self, m) allows matrix transformation of the centre and direction.
-    tri_iter(self) returns generator of face indeces broken up into triangles.
+    tri_iter(self) returns generator of face indices broken up into triangles.
 
     parent: Shape object.
     direction: 3-Vector, face direction (faces are one-sided).
     colour: str, hex colour.
-    points: list of vertix indeces.
+    points: list of vertex indices.
     verts: int, number of vertices.
     centre: 3-Vector, centre of face.
     """
@@ -85,7 +85,7 @@ class Shape:
     points: list of 3-Vectors, vertices of shape.
     faces: list of Faces.
     """
-    POINTS = ([0,0,0],)  # first points is the 'anchor'
+    POINTS = ([0,0,0],)  # first point is the 'anchor'   Why are these not in the init?
     FACES = ()
 
     def __init__(self, shift=V3.z, trans=M3.e):
@@ -204,4 +204,24 @@ class SquarePyramid(Shape):
         ([0,1,1/2], 'orange', (2,4,3)),
         ([-1,0,1/2], 'green', (3,4,0)),
         ([0,0,-1], '#603', (0,1,2,3)),
+    )
+
+
+class Octagon(Shape):
+    POINTS = (
+        [1, 1, 0], [1, 2, 0], [2, 2, 0], [2, 1, 0],
+        [0, 0, 1], [0, 3, 1], [3, 3, 1], [3, 0, 1],
+        [1, 1, 2], [1, 2, 2], [2, 2, 2], [2, 1, 2],
+    )
+    FACES = (
+        ([0, 1, 0], 'red', (0,1,2,3)),
+        ([0, 1, 0], 'blue', (0,1,4,5)),
+        ([0, 1, 0], 'yellow', (1,2,6,5)),
+        ([0, 1, 0], 'orange', (2,3,7,6)),
+        ([0, 1, 0], 'green', (0,3,7,4)),
+        ([0, 1, 0], 'cyan', (4,8,9,5)),
+        ([0, 1, 0], 'lime', (5,9,10,6)),
+        ([0, 1, 0], 'gray', (6,7,11,10)),
+        ([0, 1, 0], 'pink', (8,4,7,11)),
+        ([0, 1, 0], 'purple', (8,9,10, 11)),
     )
