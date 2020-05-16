@@ -50,8 +50,8 @@ class Face:
         Preform linear matrix transformation on face.
         :param m: Matrix
         """
-        self.direction = m * self.direction
-        self.centre = m * self.centre
+        self.direction = m @ self.direction
+        self.centre = m @ self.centre
 
     def tri_points(self, i):
         return (
@@ -123,7 +123,7 @@ class Shape:
         Preform linear matrix transformation on shape.
         :param m: Matrix
         """
-        self.points = [m * v for v in self.points]
+        self.points = [m@v for v in self.points]
         for f in self.faces:
             f.transform(m)
         if m.det == 0:  # optimisation only needed if dimentions collapsed
@@ -225,3 +225,4 @@ class Octagon(Shape):
         ([0, 1, 0], 'pink', (8,4,7,11)),
         ([0, 1, 0], 'purple', (8,9,10, 11)),
     )
+

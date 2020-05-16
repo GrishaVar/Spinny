@@ -13,14 +13,14 @@ def projection(v, camera, centre):
     :return: 2D Vector, position on screen
     """
     v -= camera.pos  # camera is basically the origin after this
-    v = M3.z_rot(-camera.z_angle) * v  # rotate points on z-axis around camera
-    v = M3.x_rot(-camera.x_angle) * v  # in the opposite direction
+    v = M3.z_rot(-camera.z_angle) @ v  # rotate points on z-axis around camera
+    v = M3.x_rot(-camera.x_angle) @ v  # in the opposite direction
 
     sx = 1/v._value[1]  # more distance => point closer to middle (?)
     sy = 1/v._value[1]
     sx *= 800  # zoom way in (original pyramid is tiny)
     sy *= -800  # tk has y pointing down
-    res = M([[sx, 0, 0], [0, 0, sy]]) * v  # Apply transform from Q3 to Q2
+    res = M([[sx, 0, 0], [0, 0, sy]]) @ v  # Apply transform from Q3 to Q2
     res += centre  # move to the middle
     return res
 
@@ -66,7 +66,7 @@ class Camera:
         if self.rot_matrix_outdated or self._rot_matrix is None:
             mz = M3.z_rot(self.z_angle)
             mx = M3.x_rot(self.x_angle)
-            self._rot_matrix = mz * mx  # other way around doesn't work???
+            self._rot_matrix = mz @ mx  # other way around doesn't work??? TODO
             self.rot_matrix_outdated = False
         return self._rot_matrix
 
@@ -74,7 +74,7 @@ class Camera:
     def view(self):
         """Return normalised vector pointing in camera's direction."""
         if self.view_outdated or self._view is None:
-            self._view = self.rot_matrix * V3.j  # j is the default orientation
+            self._view = self.rot_matrix @ V3.j  # j is the default orientation
             self.view_outdated = False
         return self._view
 
@@ -87,8 +87,8 @@ class Camera:
         """
         z = v.project((V3.k,))
         xy = v - z  # should be done in matrix but this is faster
-        delta = (self.rot_matrix * xy) + z  # up/down independent of view direction
-        self.pos += delta * self.speed
+        delta = (self.rot_matrix @ xy) + z  # up/down independent of view direction
+        self.pos += self.speed * delta
 
     def turn(self, rad_x, rad_z):
         """

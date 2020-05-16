@@ -327,12 +327,6 @@ class Window:
 
 
 myShape = ShapeCombination(
-    Octagon(V([0,0,0]))  # v pretty
-
-
-)
-
-"""
     Cube(V([0,0,0])),
     Cube(V([0,0,1])),
     SquarePyramid(V([0,0,2])),
@@ -341,7 +335,8 @@ myShape = ShapeCombination(
     SquarePyramid(V([2,0,2])),
     Cube(V([1,0,1])),
     shift=V([-1.5,-0.5,-1.5]),
-    """
+)
+myShape_ = Octagon(V([0,0,0]))  # v pretty
 
 if __name__ == '__main__':
     root = Tk()

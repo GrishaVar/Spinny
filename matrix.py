@@ -35,8 +35,8 @@ class Matrix(VectorSpace):
     Matrix implementation. Index with M[i,j] (start at zero!)
 
     Supports addition (+), subtraction (-),
-    negation (-m), multiplication (scalar, matrix) (*),
-    powers (**).
+    negation (-m), scaling (*),
+    matrix multiplication(@), powers (**).
 
     det(self) returns determinant (memoised).
     transpose(m) returns m transposed.
@@ -54,14 +54,14 @@ class Matrix(VectorSpace):
     def __init__(self, rows):  # assumes input is list of lists!
         self._value = rows
         self.n = len(rows)
-        if self.n == 0:
-            raise ValueError('Matrix with zero rows')
+        # if self.n == 0:
+        #     raise ValueError('Matrix with zero rows')
         self.m = len(rows[0])
-        if self.m == 0:
-            raise ValueError('Matrix with zero columns')
-        for i, row in enumerate(self._value):
-            if len(row) != self.m:
-                raise ValueError('Matrix with unequal row lengths')
+        # if self.m == 0:
+        #     raise ValueError('Matrix with zero columns')
+        # for i, row in enumerate(self._value):
+        #     if len(row) != self.m:
+        #         raise ValueError('Matrix with unequal row lengths')
         self._det = None
 
     @property
@@ -74,7 +74,7 @@ class Matrix(VectorSpace):
         Calculate and store determinant.
         :return: int
         """
-        if self._det is None:  # kinda-sorta-memorised determinant
+        if self._det is None:  # kinda-sorta-memoised determinant
             v = self._value
             if self.n != self.m:
                 self._det = 0
@@ -96,7 +96,7 @@ class Matrix(VectorSpace):
                 raise NotImplementedError('High order det not implemented yet')
         return self._det
 
-    def __repr__(self):  # TODO add neg
+    def __repr__(self):
         res_parts = []
         for row in self._value:
             res_parts.append('\t'.join(map(str, row)))
@@ -109,7 +109,7 @@ class Matrix(VectorSpace):
             i, j = pos
             return self._value[i][j]
         except TypeError:  # pos not a tuple => requesting full row
-            return self._value[i]
+            return self._value[pos]
 
     def __setitem__(self, pos, x):
         """index row with M[int] or value with M[int,int]. Index from 0."""
@@ -117,14 +117,14 @@ class Matrix(VectorSpace):
             i, j = pos
             self._value[i][j] = x
         except TypeError:  # pos not a tuple => requesting full row
-            self._value[i] = x
+            self._value[pos] = x
 
     def __add__(self, other):
         if other == 0:  # allows sum()
             return self
         # if not isinstance(other, Matrix):
         #    raise TypeError('Incompatible type: {}'.format(type(other)))
-        if self.size != other.size:  # TODO get rid of this? will cause error anyway
+        if self.size != other.size:
             raise ValueError('Different Sizes')
 
         res = []
@@ -141,50 +141,52 @@ class Matrix(VectorSpace):
         return Matrix(res)
 
     def __mul__(self, other):
-        """Scalar and matrix multiplication."""
-        # technically this shouldn't do matrix multiplication
-        # because __rmul__ assumes that multiplication is commutatitve
-        # so, TODO: extract this to different method
+        """Scalar multiplication."""  # TODO implement elementwise M*M?
         self_value = self._value  # avoid dots in expensive loops
         self_n, self_m = self.size
         res = []
         res_append = res.append
 
-        try:  # Matrix multiplication.   m*m=m   m*v=v
-            v2 = other._value  # other._value is private you need at add a other.getvalue()
-            other_n, other_m = other.size
-            other_value = other._value  # other._value is private you need at add a other.getvalue()
-            if self_m != other_n:
-                raise ValueError('Incompatible Sizes')
-            if other._IS_VECTOR:  # other is vector => return vector  again other._IS_VECTOR is private
-            # if isinstance(other, Vector):
-                for i in range(self_n):
-                    value = 0
-                    for j in range(self_m):
-                        value += self_value[i][j] * other_value[j]
-                    res_append(value)
-                return Vector(res)
-            else:  # other is matrix => return matrix
-                for i in range(self_n):
-                    row = []
-                    row_append = row.append
-                    for j in range(other_m):
-                        value = 0
-                        for k in range(self_m):
-                            value += self_value[i][k] * other_value[k][j]
-                        row_append(value)
-                    res_append(row)
-                res = Matrix(res)
-                if None not in (self._det, other._det):  # other._det is private
-                    res._det = self._det * other._det  # might as well # other._det is private
-                return res
-        except AttributeError:  # Scalar Multiplication
+        for i in range(self_n):
+            row = []
+            row_append = row.append
+            for j in range(self_m):
+                row_append(other * self_value[i][j])
+            res_append(row)
+        return Matrix(res)
+
+    def __matmul__(self, other):
+        self_value = self._value  # avoid dots in expensive loops
+        self_n, self_m = self.size
+        res = []
+        res_append = res.append
+        v2 = other._value  # other._value is private you need at add a other.getvalue()
+        other_n, other_m = other.size
+        other_value = other._value  # other._value is private you need at add a other.getvalue()
+        if self_m != other_n:
+            raise ValueError('Incompatible Sizes')
+        if other._IS_VECTOR:  # other is vector => return vector  again other._IS_VECTOR is private
+        # if isinstance(other, Vector):
+            for i in range(self_n):
+                value = 0
+                for j in range(self_m):
+                    value += self_value[i][j] * other_value[j]
+                res_append(value)
+            return Vector(res)
+        else:  # other is matrix => return matrix
             for i in range(self_n):
                 row = []
-                for j in range(self_m):
-                    row.append(other * self_value[i][j])
+                row_append = row.append
+                for j in range(other_m):
+                    value = 0
+                    for k in range(self_m):
+                        value += self_value[i][k] * other_value[k][j]
+                    row_append(value)
                 res_append(row)
-            return Matrix(res)
+            res = Matrix(res)
+            if None not in (self._det, other._det):
+                res._det = self._det * other._det  # might as well
+            return res
 
     def __pow__(self, other):
         res = self
@@ -298,18 +300,14 @@ class Vector(Matrix):  # these are saved as horizontal but treated as vertical.
         #    raise ValueError('Different Sizes')
         return Vector(list(map(sum, zip(self._value, other._value))))
 
-    def __mul__(self, other):
-        try:   # Matrix multiplication. v*m=m v*v=v
-            if self.m != other.n:
-                raise ValueError('Incompatible Sizes')
-            if not other._IS_VECTOR:
-            #if not isinstance(other, Vector):
-                return self.to_matrix() * other
-            else:  # only possible if n=m=1 for both. I doubt this will ever be used.
-                return Vector([self._value[0] * other._value[0]])
-        except AttributeError:  # scalar multiplication
-        #if not isinstance(other, Matrix):
-            return Vector([other*a for a in self._value])
+    def __mul__(self, other):  # scalar multiplication only!
+        return Vector([other*a for a in self._value])
+
+    def __matmul__(self, other):  # v@m = m, m@v = v, v@v = int
+        if other._IS_VECTOR:
+            return self.dot(other)  # v dot w = v^t matmul w
+        else:  # doesn't account for v matmul w with len(v)=len(w)=1 TODO
+            return self._to_matrix() @ other
 
     @property
     def length(self):  # another semi-memoised expensive function
@@ -340,7 +338,7 @@ class Vector(Matrix):  # these are saved as horizontal but treated as vertical.
         try:
             #turned = Matrix.transpose(self.to_matrix())
             turned = Matrix([self._value])
-            return (turned*other)._value[0]  # matrix only has one element
+            return (turned@other)._value[0]  # matrix only has one element
         except AttributeError:
             raise TypeError('Incompatible type: {}'.format(type(other)))
 
@@ -352,10 +350,8 @@ class Vector(Matrix):  # these are saved as horizontal but treated as vertical.
         """
         if not isinstance(other, Vector):
             raise TypeError('Incompatible type: {}'.format(type(other)))
-        if self.n != other.n:
+        if not (self.n == other.n == 3):  # Also exists for 7 dimensions... implement?
             raise ValueError('Incompatible Sizes')
-        if self.n != 3:  # Also exists for 7 dimensions... implement?
-            raise ValueError('Non-3 dimention')
 
         a1, a2, a3 = self._value
         b1, b2, b3 = other._value
@@ -377,6 +373,6 @@ class Vector(Matrix):  # these are saved as horizontal but treated as vertical.
         """
         res = Vector([0, 0, 0])
         for base in basis:
-            res += (self.dot(base)/base.dot(base)) * base  # inefficient
+            res += (self.dot(base)/base.dot(base)) * base  # inefficient TODO
         return res
 
