@@ -119,41 +119,37 @@ class Matrix(VectorSpace):
         except TypeError:  # pos not a tuple => requesting full row
             self._value[pos] = x
 
+    def __iadd__(self, other):
+        if self.size != other.size:
+            raise ValueError('Different Sizes!')
+        n, m = self.size
+        self_value = self._value
+        other_value = other._value
+        for i in range(n):
+            for j in range(m):
+                self_value[i][j] += other_value[i][j]
+        return self
+
     def __add__(self, other):
         if other == 0:  # allows sum()
             return self
-        # if not isinstance(other, Matrix):
-        #    raise TypeError('Incompatible type: {}'.format(type(other)))
-        if self.size != other.size:
-            raise ValueError('Different Sizes')
+        res = self.copy()
+        res += other
+        return res
 
-        res = []
-        res_append = res.append  # avoid dots in expensive loops
-        self_value = self._value
-        other_value = other._value  # other._value is private you need at add a other.getvalue()
+    def __imul__(self, other):  # scalar multiplication only!
         n, m = self.size
+        self_value = self._value
         for i in range(n):
-            row = []
-            row_append = row.append
             for j in range(m):
-                row_append(self_value[i][j] + other_value[i][j])
-            res_append(row)
-        return Matrix(res)
+                self_value[i][j] *= other
+        return self
 
     def __mul__(self, other):
         """Scalar multiplication."""  # TODO implement elementwise M*M?
-        self_value = self._value  # avoid dots in expensive loops
-        self_n, self_m = self.size
-        res = []
-        res_append = res.append
-
-        for i in range(self_n):
-            row = []
-            row_append = row.append
-            for j in range(self_m):
-                row_append(other * self_value[i][j])
-            res_append(row)
-        return Matrix(res)
+        res = self.copy()
+        res *= other
+        return res
 
     def __matmul__(self, other):
         self_value = self._value  # avoid dots in expensive loops
@@ -212,8 +208,8 @@ class Matrix(VectorSpace):
         # could be done with transpose but it makes matrix which takes too long
         # TODO is this a list of lists?
 
-    def copy(self):
-        return Matrix(self._value)
+    def copy(self):  # TODO add det?
+        return Matrix(self._value.copy())
 
     def row_switch(self, i, j):
         """
@@ -221,11 +217,6 @@ class Matrix(VectorSpace):
         :param i: index of row 1
         :param j: index of row 2
         """
-        #value = list(self._value)
-        #temp = value[j]
-        #value[j] = value[i]
-        #value[i] = temp
-        #self._value = list(value)
         self._value[i], self._value[j] = self._value[j], self._value[i]
 
     def row_mult(self, i, m):
@@ -236,9 +227,6 @@ class Matrix(VectorSpace):
         """
         if m == 0:
             raise ValueError("m can't be zero!")
-        #value = list(self._value)
-        #value[i] = tuple(m*x for x in value[i])
-        #self._value = tuple(value)
         self._value[i] = [m*x for x in self._value[i]]
 
     def row_add(self, i, j, m):
@@ -251,10 +239,6 @@ class Matrix(VectorSpace):
         """
         if m == 0:
             raise ValueError("m can't be zero!")
-        #value = list(self._value)
-        #row = tuple(m*x for x in value[j])
-        #value[i] = tuple(x+y for x,y in zip(value[i], row))
-        #self._value = tuple(value)
         self._value[i] = [x+m*y for x,y in zip(self._value[i], self._value[j])]
 
 
@@ -291,17 +275,20 @@ class Vector(Matrix):  # these are saved as horizontal but treated as vertical.
     def __setitem__(self, pos, x):
         self._value[pos] = x
 
-    def __add__(self, other):
-        if other == 0:  # allows sum()
-            return self
-        #if not isinstance(other, Vector):
-        #    raise TypeError('Incompatible type: {}'.format(type(other)))
-        #if self.size != other.size:
-        #    raise ValueError('Different Sizes')
-        return Vector(list(map(sum, zip(self._value, other._value))))
+    def __iadd__(self, other):
+        if self.n != other.n:
+            raise ValueError('Different Sizes')
+        self_value = self._value
+        other_value = other._value
+        for i in range(self.n):
+            self_value[i] += other_value[i]
+        return self
 
-    def __mul__(self, other):  # scalar multiplication only!
-        return Vector([other*a for a in self._value])
+    def __imul__(self, other):  # scalar multiplication only!
+        self_value = self._value
+        for i in range(self.n):
+            self_value[i] *= other
+        return self
 
     def __matmul__(self, other):  # v@m = m, m@v = v, v@v = int
         if other._IS_VECTOR:
@@ -325,7 +312,7 @@ class Vector(Matrix):  # these are saved as horizontal but treated as vertical.
         # TODO is this a list of lists?
 
     def copy(self):
-        return Vector(self._value)
+        return Vector(self._value.copy())
 
     def dot(self, other):
         """
