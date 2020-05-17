@@ -12,7 +12,7 @@ class Colour:  # TODO should this subclass Vector? + and * would be useful
         'magenta':  (0xff, 0x00, 0xff),
         'cyan':     (0x00, 0xff, 0xff),
         'orange':   (0xff, 0x7f, 0x00),  # TODO add other 127-based colours?
-        'epic':     (0x66, 0x00, 0x33),  # TODO make these pre-existing objects?
+        'byz':      (0x66, 0x00, 0x33),  # TODO make these pre-existing objects?
         'lime':     (0x00, 0x00, 0x00),
         'grey':     (0x00, 0x00, 0x00),
         'pink':     (0x00, 0x00, 0x00),
