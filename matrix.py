@@ -191,7 +191,10 @@ class Matrix(VectorSpace):
         return res
 
     def __eq__(self, other):
-        return isinstance(other, Matrix) and self._value == other._value
+        try:
+            return self._value == other.value
+        except AttributeError:
+            return False
 
     @staticmethod
     def transpose(m):
@@ -306,6 +309,10 @@ class Vector(Matrix):  # these are saved as horizontal but treated as vertical.
             self._length = sqrt(sum([c**2 for c in self._value]))
         return self._length
 
+    @property
+    def unit(self):
+        return self * (1/self.length)
+
     def to_matrix(self):
         """Converts Vector to Matrix."""
         return Matrix(list(zip(self._value)))
@@ -313,6 +320,14 @@ class Vector(Matrix):  # these are saved as horizontal but treated as vertical.
 
     def copy(self):
         return Vector(self._value.copy())
+
+    def orthant(self):
+        res = 0
+        for n in self._value:
+            res *= 2
+            if n > 0:
+                res += 1
+        return res
 
     def dot(self, other):
         """
