@@ -1,5 +1,6 @@
 from matrix import Vector as V
 from common import V3, M3
+from colour import Colour
 
 
 class Face:
@@ -100,7 +101,7 @@ class Shape:
     def reset(self):
         """Creates Vector and Face objects from given tuples."""
         self.points = [V(v) for v in self.POINTS]
-        self.faces = [Face(self, V(d), col, *p) for d, col, p in self.FACES]
+        self.faces = [Face(self, V(d), Colour(c), *p) for d, c, p in self.FACES]
 
     def move_to(self, pos):
         """
@@ -184,12 +185,12 @@ class Cube(Shape):
     )
 
     FACES = (
-        ([0,0,-1], '#603', (0,1,2,3)),
+        ([0,0,-1], 'byz', (0,1,2,3)),
         ([0,-1,0], 'red', (0,4,5,1)),
         ([1,0,0], 'blue', (1,5,6,2)),
         ([0,1,0], 'orange', (2,6,7,3)),
         ([-1,0,0], 'green', (3,7,4,0)),
-        ([0,0,1], '#603', (4,7,6,5)),
+        ([0,0,1], 'byz', (4,7,6,5)),
     )
 
 
@@ -203,7 +204,7 @@ class SquarePyramid(Shape):
         ([1,0,1/2], 'blue', (1,4,2)),
         ([0,1,1/2], 'orange', (2,4,3)),
         ([-1,0,1/2], 'green', (3,4,0)),
-        ([0,0,-1], '#603', (0,1,2,3)),
+        ([0,0,-1], 'byz', (0,1,2,3)),
     )
 
 
@@ -221,7 +222,7 @@ class Octagon(Shape):
         ([0, 1, 0], 'green', (0,3,7,4)),
         ([0, 1, 0], 'cyan', (4,8,9,5)),
         ([0, 1, 0], 'lime', (5,9,10,6)),
-        ([0, 1, 0], 'gray', (6,7,11,10)),
+        ([0, 1, 0], 'grey', (6,7,11,10)),
         ([0, 1, 0], 'pink', (8,4,7,11)),
         ([0, 1, 0], 'purple', (8,9,10, 11)),
     )

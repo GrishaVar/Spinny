@@ -9,20 +9,22 @@ from shapes import ShapeCombination, Cube, SquarePyramid, Octagon
 from matrix import Vector as V
 from common import M3
 from camera import Camera, projection
+from colour import Shader
 
 
 CURSOR_VIS = {False: 'none', True: ''}
 PAUSE_TEXT = {False: '', True: 'PAUSED'}
 obj_rotator = M3.z_rot(pi / 32)  # very small angle
+SUN_VECTOR = V([1,0,-1]).unit
 
 
-def draw_circle(v, r, canvas, color='black'):
+def draw_circle(v, r, canvas, colour='black'):
     """
     Draws circle on canvas using tk's oval method.
     :param v: vector of circle centre
     :param r: radius of circle in pixels
     :param canvas: canvas object
-    :param color: colour of circle
+    :param colour: colour of circle
     :return: canvas oval object
     """
     x,y = v._value
@@ -33,7 +35,7 @@ def draw_circle(v, r, canvas, color='black'):
     y0 = y - r
     x1 = x + r
     y1 = y + r
-    return canvas.create_oval(x0, y0, x1, y1, fill=color, tag='clearable')
+    return canvas.create_oval(x0, y0, x1, y1, fill=colour, tag='clearable')
 
 
 class InfoBox:
@@ -148,6 +150,7 @@ class Window:
             font='Arial 50'
         )
         self.pause_motion()
+        self.shader = Shader()
 
         self.counter = 0
         self.time_one = 0
@@ -231,10 +234,12 @@ class Window:
 
         for face in faces:
             for tri in face.tri_iter():
+                shade_rating = -(SUN_VECTOR @ face.direction)
+                shade_adj = self.shader.shade(shade_rating)
                 self.canvas.create_polygon(
                     *(converted_points[p]._value for p in tri),
                     tag='clearable',
-                    fill=face.colour,
+                    fill=face.colour.adjust_value(shade_adj).hx
                     #outline='black',
                 )
 
