@@ -13,10 +13,9 @@ class Colour:  # TODO should this subclass Vector? + and * would be useful
         'cyan':     (0x00, 0xff, 0xff),
         'orange':   (0xff, 0x7f, 0x00),  # TODO add other 127-based colours?
         'byz':      (0x66, 0x00, 0x33),  # TODO make these pre-existing objects?
-        'lime':     (0x00, 0x00, 0x00),
-        'grey':     (0x00, 0x00, 0x00),
-        'pink':     (0x00, 0x00, 0x00),
-        'purple':   (0x00, 0x00, 0x00),
+        'lime':     (0xbf, 0xff, 0x00),
+        'grey':     (0x80, 0x80, 0x80),
+        'pink':     (0xff, 0xcc, 0xcc),
     }
 
     def __init__(self, arg=' '):
