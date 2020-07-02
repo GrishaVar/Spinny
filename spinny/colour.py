@@ -16,6 +16,8 @@ class Colour:  # TODO should this subclass Vector? + and * would be useful
         'lime':     (0xbf, 0xff, 0x00),
         'grey':     (0x80, 0x80, 0x80),
         'pink':     (0xff, 0xcc, 0xcc),
+        'brown':    (0x96, 0x4b, 0x00),
+        'beige':    (0xf5, 0xf5, 0xdc),
     }
 
     def __init__(self, arg=' '):
