@@ -208,7 +208,7 @@ class SquarePyramid(Shape):
     )
 
 
-class Octagon(Shape):
+class Octagon(Shape):  # not actually an octagon
     POINTS = (
         [1, 1, 0], [1, 2, 0], [2, 2, 0], [2, 1, 0],
         [0, 0, 1], [0, 3, 1], [3, 3, 1], [3, 0, 1],
@@ -224,6 +224,40 @@ class Octagon(Shape):
         ([0, 1, 1], 'lime', (5,9,10,6)),
         ([1, 0, 1], 'grey', (6,7,11,10)),
         ([0, -1, 1], 'pink', (8,4,7,11)),
-        ([0, 0, 1], 'byz', (8,9,10, 11)),
+        ([0, 0, 1], 'byz', (8,9,10,11)),
     )
 
+class StickMan(Shape):  # consider making a proper 3d model
+    """
+      |⎻⎻⎻⎻|
+      |____|
+     /|    |\
+    /_|    |_\   More or less like this
+      |____|
+      / /\ \
+     / /  \ \
+    /_/    \_\
+    """
+    POINTS = (
+        [-1/4, 0, 0], [-1/2, 0, 0], [-1/4, 0, 3/4], [0, 0, 3/4],  # right leg
+        [1/4, 0, 0], [1/2, 0, 0], [1/4, 0, 3/4],  # left leg (bottom only)
+        [-1/4, 0, 6/4], [1/4, 0, 6/4],  # torso (top only)
+        [-1/2, 0, 4/4], [-1/4, 0, 4/4],  # right hand (bottom only)
+        [1/2, 0, 4/4], [1/4, 0, 4/4],  # left hand (bottom only)
+        [-1/4, 0, 8/4], [1/4, 0, 8/4],  # head (top only)
+    )
+    FACES = (
+        ([0, -1, 0], 'blue', (0,1,2,3)),  # right leg
+        ([0, -1, 0], 'byz', (3,4,5,6)),  # left leg
+        ([0, -1, 0], 'cyan', (2,6,8,7)),  # torso
+        ([0, -1, 0], 'lime', (7,9,10)),  # right arm
+        ([0, -1, 0], 'lime', (8,11,12)),  # left arm
+        ([0, -1, 0], 'beige', (7,8,14,13)),  # head
+        # and now everything again in other direction
+        ([0, 1, 0], 'blue', (0,1,2,3)),  # right leg
+        ([0, 1, 0], 'byz', (3,4,5,6)),  # left leg
+        ([0, 1, 0], 'cyan', (2,6,8,7)),  # torso
+        ([0, 1, 0], 'lime', (7,9,10)),  # right arm
+        ([0, 1, 0], 'lime', (8,11,12)),  # left arm
+        ([0, 1, 0], 'brown', (7,8,14,13)),  # head
+    )
