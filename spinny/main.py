@@ -4,7 +4,7 @@ import time
 from tkinter import Tk, Canvas, BOTH, EventType
 from math import pi
 
-from shapes import ShapeCombination, Cube, SquarePyramid, Octagon
+from shapes import ShapeCombination, Cube, SquarePyramid, Octagon, StickMan
 from matrix import Vector as V
 from common import M3
 from camera import Camera, projection
@@ -65,6 +65,7 @@ class Spinny:
         self.root.update_idletasks()
         #self.root.geometry('{}x{}+0+0'.format(self.width, self.height))
         self.canvas.pack(fill=BOTH, expand=1)
+        self.canvas.configure(background='black')
 
         self.width = self.root.winfo_width()
         self.height = self.root.winfo_height()
@@ -271,6 +272,7 @@ myShape = ShapeCombination(
     shift=V([-1.5,-0.5,-1.5]),
 )
 myShape_ = Octagon(V([0,0,0]))  # v pretty
+myShape = StickMan(V([-1/4,0,0]))
 
 if __name__ == '__main__':
     root = Tk()
