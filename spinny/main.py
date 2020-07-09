@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import time
-from tkinter import Tk, Canvas, BOTH, EventType
+from tkinter import Tk, Canvas, BOTH
 from math import pi
 
 from shapes import ShapeCombination, Cube, SquarePyramid, Octagon, StickMan
@@ -39,17 +39,13 @@ def draw_circle(v, r, canvas, colour='black'):
 
 
 class Spinny:
-    KEY_BINDINGS = {
+    KEY_BINDINGS = {  # TODO make dynamic?
         'w': V([0,1,0]),
         'a': V([-1,0,0]),
         's': V([0,-1,0]),
         'd': V([1,0,0]),
-        ' ': V([0,0,1]),
+        'space': V([0,0,1]),
         'q': V([0,0,-1]),
-        'i': V([1,0]),
-        'j': V([0,1]),
-        'k': V([-1,0]),
-        'l': V([0,-1]),
     }
 
     def __init__(self, root, shape):
@@ -78,7 +74,8 @@ class Spinny:
             self.centre[0],
             10,
             anchor='n',
-            font='Arial 50'
+            font='Arial 50',
+            fill='white',
         )
         self.pause_motion()
 
@@ -99,19 +96,14 @@ class Spinny:
         self.infobox.add('frame', default='avg {}ms', rounding=1)
         self.infobox.add('max', default='max {}ms', rounding=1)
 
-        self.canvas.bind_all('<w>', self.move_input)
-        self.canvas.bind_all('<a>', self.move_input)
-        self.canvas.bind_all('<s>', self.move_input)
-        self.canvas.bind_all('<d>', self.move_input)
-        self.canvas.bind_all('<q>', self.move_input)
-        self.canvas.bind_all('<space>', self.move_input)
+        self._key_repeat_freq = 10
+        self._key_repeat_pressed = {}
+        for key in self.KEY_BINDINGS:
+            self._key_repeat_pressed[key] = True
+            self.canvas.bind_all('<KeyPress-{} >'.format(key), self.move_key_press)
+            self.canvas.bind_all('<KeyRelease-{}>'.format(key), self.move_key_release)
 
-        self.canvas.bind_all('<j>', self.turn_input)
-        self.canvas.bind_all('<l>', self.turn_input)
-        self.canvas.bind_all('<i>', self.turn_input)
-        self.canvas.bind_all('<k>', self.turn_input)
-        self.canvas.bind('<Motion>', self.turn_input)
-
+        self.canvas.bind('<Motion>', self.turn_input)  # mouse
         self.canvas.bind_all('<p>', self.toggle_motion)
         self.canvas.bind_all('<Escape>', self.toggle_motion)
         self.canvas.bind_all('<Leave>', self.pause_motion)
@@ -144,7 +136,7 @@ class Spinny:
         for v in self.shape.points:
             converted = projection(v, self.camera, self.centre)
             converted_points.append(converted)
-#            draw_circle(converted, 3-v._value[2], canvas, 'red')
+            # draw_circle(converted, 3-v._value[2], canvas, 'red')
 
         faces = []
         for face in self.shape.faces:
@@ -199,24 +191,33 @@ class Spinny:
             self.root.after(self.refresh, self.draw)
 
     def turn_input(self, event):
-        """Handles tk events for turning (mouse and keyboard)."""
+        """Handles tk events for mouse turning."""
         if self.paused:
             return
-        if event.type == EventType.Motion:  # handle mouse movement
-            if (event.x, event.y) != self.centre._value:
-                self.mouse[0] += event.x - self.centre._value[0]
-                self.mouse[1] += event.y - self.centre._value[1]
-        elif event.type == EventType.Key:  # handle key presses
-            v = self.KEY_BINDINGS.get(event.char)
-            v *= pi / 64  # TODO make sensitivity?
-            self.camera.turn(*v._value)
 
-    def move_input(self, event):
-        """Handles tk events for moving."""
+        if (event.x, event.y) != self.centre._value:
+            self.mouse[0] += event.x - self.centre._value[0]
+            self.mouse[1] += event.y - self.centre._value[1]
+
+    def move_key_press(self, event):
+        """Handles tk events for moving with keyboard."""
+        # deals with keyboard repeat delay
         if self.paused:
             return
-        v = self.KEY_BINDINGS.get(event.char)
-        self.camera.move(v)
+
+        key = event.keysym
+        self.camera.move(self.KEY_BINDINGS[key])  # TODO .get with default zero maybe?
+
+        if self._key_repeat_pressed[key]:
+            self.root.after(self._key_repeat_freq, self.move_key_press, event)
+
+    def move_key_release(self, event):
+        key = event.keysym
+        if self._key_repeat_pressed[key]:
+            self._key_repeat_pressed[key] = False
+            self.root.after(self._key_repeat_freq+1, self.move_key_release, event)
+        else:
+            self._key_repeat_pressed[key] = True
 
     def mouse_to_angles(self):  # move to Camera? Doesn't use tk.
         """Converts mouse position to x and z angles in radians."""
