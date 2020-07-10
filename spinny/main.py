@@ -275,8 +275,11 @@ myShape = ShapeCombination(
 myShape_ = Octagon(V([0,0,0]))  # v pretty
 myShape = StickMan(V([-1/4,0,0]))
 
-if __name__ == '__main__':
+def start():
     root = Tk()
     spinny = Spinny(root, myShape)
     spinny.start()
+
+if __name__ == '__main__':
+    start()
 
