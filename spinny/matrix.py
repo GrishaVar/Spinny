@@ -297,7 +297,7 @@ class Vector(Matrix):  # these are saved as horizontal but treated as vertical.
         if other._IS_VECTOR:
             return self.dot(other)  # v dot w = v^t matmul w
         else:  # doesn't account for v matmul w with len(v)=len(w)=1 TODO
-            return self._to_matrix() @ other
+            return self.to_matrix() @ other
 
     @property
     def length(self):  # another semi-memoised expensive function
