@@ -228,7 +228,7 @@ class Octagon(Shape):  # not actually an octagon
     )
 
 class StickMan(Shape):  # consider making a proper 3d model
-    """
+    r"""
       |⎻⎻⎻⎻|
       |____|
      /|    |\
