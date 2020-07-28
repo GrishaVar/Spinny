@@ -1,6 +1,6 @@
 from math import cos, sin, sqrt
 
-from matrix import Matrix as M, Vector as V
+from spinny.matrix import Matrix as M, Vector as V
 
 
 class V2:

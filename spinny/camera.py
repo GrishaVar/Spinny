@@ -1,7 +1,7 @@
 from math import pi
 
-from matrix import Matrix as M, Vector as V
-from common import V3, M3
+from spinny.matrix import Matrix as M, Vector as V
+from spinny.common import V3, M3
 
 
 def projection(v, camera, centre):

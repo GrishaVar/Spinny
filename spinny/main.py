@@ -4,12 +4,12 @@ import time
 from tkinter import Tk, Canvas, BOTH
 from math import pi
 
-from shapes import ShapeCombination, Cube, SquarePyramid, Octagon, StickMan
-from matrix import Vector as V
-from common import M3
-from camera import Camera, projection
-from colour import Shader
-from infobox import InfoBox
+from spinny.shapes import ShapeCombination, Cube, SquarePyramid, Octagon, StickMan
+from spinny.matrix import Vector as V
+from spinny.common import M3
+from spinny.camera import Camera, projection
+from spinny.colour import Shader
+from spinny.infobox import InfoBox
 
 
 CURSOR_VIS = {False: 'none', True: ''}
@@ -279,7 +279,4 @@ def start():
     root = Tk()
     spinny = Spinny(root, myShape)
     spinny.start()
-
-if __name__ == '__main__':
-    start()
 

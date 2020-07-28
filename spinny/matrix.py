@@ -30,7 +30,7 @@ class VectorSpace:
         raise NotImplementedError('Norm not implemented')
 
 
-class Matrix(VectorSpace):
+class Matrix(VectorSpace):  # TODO extract matrix and common to linalg module?
     """
     Matrix implementation. Index with M[i,j] (start at zero!)
 

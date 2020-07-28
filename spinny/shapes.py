@@ -1,6 +1,6 @@
-from matrix import Vector as V
-from common import V3, M3
-from colour import Colour
+from spinny.matrix import Vector as V
+from spinny.common import V3, M3
+from spinny.colour import Colour
 
 
 class Face:

@@ -1,6 +1,6 @@
 from math import e, exp
 
-
+# TODO extract into misc module
 class Colour:  # TODO should this subclass Vector? + and * would be useful
     COMMON_COLOURS = {
         'red':      (0xff, 0x00, 0x00),
