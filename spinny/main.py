@@ -165,13 +165,13 @@ class Spinny:
                     #outline='black',
                 )
 
-            continue
-            draw_circle(projection(face.centre,self.camera,self.centre),2,self.canvas, face.colour)
-            self.canvas.create_line(
-                *projection(face.centre, self.camera, self.centre)._value,
-                *projection(face.centre+face.direction, self.camera, self.centre)._value,
-                tag='clearable',
-            )
+            # continue
+            # draw_circle(projection(face.centre,self.camera,self.centre),2,self.canvas, face.colour)
+            # self.canvas.create_line(
+            #     *projection(face.centre, self.camera, self.centre)._value,
+            #     *projection(face.centre+face.direction, self.camera, self.centre)._value,
+            #     tag='clearable',
+            # )
 
         self.shape.transform(obj_rotator)  # yo linear algebra works
 
