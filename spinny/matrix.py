@@ -364,9 +364,6 @@ class Vector(Matrix):  # these are saved as horizontal but treated as vertical.
 
         return Vector([s1, s2, s3])
 
-        M = Matrix([[i3,j3,k3], self._value, other._value])
-        return -(M.det)  # don't look at this, it's disgusting but it's kinda cool
-
     def project(self, basis):
         """
         Return projection of vector in given basis.
