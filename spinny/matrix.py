@@ -156,7 +156,7 @@ class Matrix(VectorSpace):  # TODO extract matrix and common to linalg module?
         self_n, self_m = self.size
         res = []
         res_append = res.append
-        v2 = other._value  # other._value is private you need at add a other.getvalue()
+        v2 = other._value  # other._value is private you need at add a other.getvalue() v2 is not used, remove?
         other_n, other_m = other.size
         other_value = other._value  # other._value is private you need at add a other.getvalue()
         if self_m != other_n:
@@ -242,7 +242,7 @@ class Matrix(VectorSpace):  # TODO extract matrix and common to linalg module?
         """
         if m == 0:
             raise ValueError("m can't be zero!")
-        self._value[i] = [x+m*y for x,y in zip(self._value[i], self._value[j])]
+        self._value[i] = [x+m*y for x, y in zip(self._value[i], self._value[j])]
 
 
 class Vector(Matrix):  # these are saved as horizontal but treated as vertical.
@@ -258,6 +258,7 @@ class Vector(Matrix):  # these are saved as horizontal but treated as vertical.
     n: int, number of entries.
     m: int, 1.
     """
+    # I'm pretty sure it should be a subclass of VectorSpace. All properties of a Matrix is NOT inherited
 
     _IS_VECTOR = True
 
@@ -280,9 +281,9 @@ class Vector(Matrix):  # these are saved as horizontal but treated as vertical.
 
     def __iadd__(self, other):
         if self.n != other.n:
-            raise ValueError('Different Sizes')
+            raise ValueError(f'Vectors of Different Sizes {self}, {other}')
         self_value = self._value
-        other_value = other._value
+        other_value = other.to_list()
         for i in range(self.n):
             self_value[i] += other_value[i]
         return self
@@ -318,10 +319,14 @@ class Vector(Matrix):  # these are saved as horizontal but treated as vertical.
         return Matrix(list(zip(self._value)))
         # TODO is this a list of lists?
 
+    def to_list(self):
+        return self._value
+
     def copy(self):
         return Vector(self._value.copy())
 
     def orthant(self):
+        # do you mean quadrant?
         res = 0
         for n in self._value:
             res *= 2
@@ -374,4 +379,3 @@ class Vector(Matrix):  # these are saved as horizontal but treated as vertical.
         for base in basis:
             res += (self.dot(base)/base.dot(base)) * base  # inefficient TODO
         return res
-
