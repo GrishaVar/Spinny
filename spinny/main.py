@@ -15,7 +15,7 @@ from spinny.infobox import InfoBox
 CURSOR_VIS = {False: 'none', True: ''}
 PAUSE_TEXT = {False: '', True: 'PAUSED'}
 obj_rotator = M3.z_rot(pi / 32)  # very small angle
-SUN_VECTOR = V([1,0,-1]).unit
+SUN_VECTOR = V((1,0,-1)).unit
 
 
 def draw_circle(v, r, canvas, colour='black'):
@@ -40,12 +40,12 @@ def draw_circle(v, r, canvas, colour='black'):
 
 class Spinny:
     KEY_BINDINGS = {  # TODO make dynamic?
-        'w': V([0,1,0]),
-        'a': V([-1,0,0]),
-        's': V([0,-1,0]),
-        'd': V([1,0,0]),
-        'space': V([0,0,1]),
-        'q': V([0,0,-1]),
+        'w': V((0,1,0)),
+        'a': V((-1,0,0)),
+        's': V((0,-1,0)),
+        'd': V((1,0,0)),
+        'space': V((0,0,1)),
+        'q': V((0,0,-1)),
     }
 
     def __init__(self, root, shape):
@@ -66,7 +66,7 @@ class Spinny:
         self.width = self.root.winfo_width()
         self.height = self.root.winfo_height()
 
-        self.centre = V([self.width//2, self.height//2])
+        self.centre = V((self.width//2, self.height//2))
         self.refresh = 30
         self.mouse = [0, 0]
         self.paused = False
@@ -141,10 +141,10 @@ class Spinny:
         faces = []
         for face in self.shape.faces:
             cam_to_face = face.centre - self.camera.pos
-            if self.camera.view.dot(cam_to_face) <= 0:
+            if self.camera.view @ cam_to_face <= 0:
                 # skip if face behind the camera
                 continue
-            if face.direction.dot(-cam_to_face) <= 0:
+            if face.direction @ -cam_to_face <= 0:
                 # skip if camera is behind face
                 continue
             faces.append(face)
@@ -263,17 +263,20 @@ class Spinny:
 
 
 myShape = ShapeCombination(
-    Cube(V([0,0,0])),
-    Cube(V([0,0,1])),
-    SquarePyramid(V([0,0,2])),
-    Cube(V([2,0,0])),
-    Cube(V([2,0,1])),
-    SquarePyramid(V([2,0,2])),
-    Cube(V([1,0,1])),
-    shift=V([-1.5,-0.5,-1.5]),
+    Cube(V((0,0,0))),
+    Cube(V((0,0,1))),
+    SquarePyramid(V((0,0,2))),
+    Cube(V((2,0,0))),
+    Cube(V((2,0,1))),
+    SquarePyramid(V((2,0,2))),
+    Cube(V((1,0,1))),
+    shift=V((-1.5,-0.5,-1.5)),
 )
-myShape_ = Octagon(V([0,0,0]))  # v pretty
-myShape = StickMan(V([-1/4,0,0]))
+myShape_ = Octagon(V((0,0,0)))  # v pretty
+myShape = ShapeCombination(
+    StickMan(V((-1/4,0,10))),
+    myShape,
+)
 
 def start():
     root = Tk()
